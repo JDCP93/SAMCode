@@ -1,3 +1,9 @@
+
+# Function from Krushke2015
+# 
+# Kruschke, J.K., 2015. Doing Bayesian data analysis: a tutorial with R, JAGS, and Stan, Edition 2. ed. Academic Press, Boston.
+
+
 HDIofMCMC = function( sampleVec , credMass=0.95 ) {
       # Computes highest density interval from a sample of representative values,
       #   estimated as shortest credible interval.
@@ -23,17 +29,11 @@ HDIofMCMC = function( sampleVec , credMass=0.95 ) {
 }
 
 
+Output=as.matrix(fit)
+sumD1Values = test[,c("sumD1[1]","sumD1[2]","sumD1[3]","sumD1[4]","sumD1[5]")]
 
-HDIofMCMC(as.matrix(fit[,"SumD1[1]"]))
-
-
-fit[["a[1]"]]
-
-test=as.matrix(fit)
-test1 = test[,c("sumD1[1]","sumD1[2]","sumD1[3]","sumD1[4]","sumD1[5]")]
-
-HDIsumD11 = HDIofMCMC(test1[,1])/sum(priorSumD1$Mean)
-HDIsumD12 = HDIofMCMC(test1[,2])/sum(priorSumD1$Mean)
-HDIsumD13 = HDIofMCMC(test1[,3])/sum(priorSumD1$Mean)
-HDIsumD14 = HDIofMCMC(test1[,4])/sum(priorSumD1$Mean)
-HDIsumD15 = HDIofMCMC(test1[,5])/sum(priorSumD1$Mean)
+HDIlag0 = HDIofMCMC(test1[,1])/sum(priorSumD1$Mean)
+HDIlag1 = HDIofMCMC(test1[,2])/sum(priorSumD1$Mean)
+HDIlag2 = HDIofMCMC(test1[,3])/sum(priorSumD1$Mean)
+HDIlag3 = HDIofMCMC(test1[,4])/sum(priorSumD1$Mean)
+HDIlag4 = HDIofMCMC(test1[,5])/sum(priorSumD1$Mean)
