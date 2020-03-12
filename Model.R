@@ -19,7 +19,7 @@ model{
             }
       }
   
-      # Assign priors to the ANPP regression parameters - these are very precisely zero
+      # Assign priors to the ANPP regression parameters - these are very precisely zero i.e. mean of zero and very low variance
       for(k in 1:6){
             a[k] ~ dnorm(0,0.0000001) 
       }
@@ -39,12 +39,8 @@ model{
                   for(i in Nlag:Nyrs){
                         antX1[i,m,t] <- weight[m,t]*ppt[i-t+1,m] # Antecedent rainfall is the monthly rainfall multiplied by the normalised monthly weight 
                   }
-            } 
-      }
-  
-      # Calculate the sum of all delta weights over the entire lag period so that we can normalise the weights
-      for(t in 1:Nlag){
-            sumD1[t] <- sum(delta[,t]) # Sum the monthly weights for each lag year 
+            }
+        sumD1[t] <- sum(delta[,t]) # Sum the monthly weights for each lag year 
       }
       sumD <- sum(sumD1[]) # Sum the yearly weights to get the total of all weights from over the lag period considered
   

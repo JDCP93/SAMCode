@@ -5,49 +5,32 @@ library(gridExtra)
 setwd("/Users/climate/Documents/SAM Modelling")
 
   
-load("JDCP110220Prior.RData")
+# Load the prior and posterior data
+load("priorSummary.RData")
+load("posteriorSummary.Rdata")
 
-  priorSummary = summary(fit)
+# Create variables for the parameters of interest
+priorStats = data.frame(priorSummary$statistics)
+priorQuantiles = data.frame(priorSummary$quantiles)
 
-  priorStats = data.frame(priorSummary$statistics)
-  priorQuantiles = data.frame(priorSummary$quantiles)
+priorMu = priorStats[grep("mu",row.names(priorStats)),]
+priorA = priorStats[grep("a",row.names(priorStats)),]
+priorCum.weight = priorStats[grep("cum.weight",row.names(priorStats)),]
+priorSumD1 = priorStats[grep("sumD1",row.names(priorStats)),]
+priorSumD1Quantiles = priorQuantiles[grep("sumD1",row.names(priorStats)),]
 
-  muIdx=grep("mu",row.names(priorStats))
-  priorMu = priorStats[muIdx,]
-  
-  aIdx=grep("a",row.names(priorStats))
-  priorA = priorStats[aIdx,]
+posteriorStats = data.frame(posteriorSummary$statistics)
+posteriorQuantiles = data.frame(posteriorSummary$quantiles)
 
-  cum.weightIdx=grep("cum.weight",row.names(priorStats))
-  priorCum.weight = priorStats[cum.weightIdx,]
+posteriorMu = posteriorStats[grep("mu",row.names(posteriorStats)),]
+posteriorA = posteriorStats[grep("a",row.names(posteriorStats)),]
+posteriorAQuantiles = posteriorQuantiles[grep("a",row.names(posteriorStats)),]
+posteriorCum.weight = posteriorStats[grep("cum.weight",row.names(posteriorStats)),]
+posteriorSumD1 = posteriorStats[grep("sumD1",row.names(posteriorStats)),]
+posteriorSumD1Quantiles = posteriorQuantiles[grep("sumD1",row.names(posteriorStats)),]
 
-  sumD1Idx=grep("sumD1",row.names(priorStats))
-  priorSumD1 = priorStats[sumD1Idx,]
-  
-  priorSumD1Quantiles = priorQuantiles[sumD1Idx,]
-  
-  
-load("JDCP110220.RData")
-  
-  posteriorSummary = summary(fit)
-  
-  posteriorStats = data.frame(posteriorSummary$statistics)
-  posteriorQuantiles = data.frame(posteriorSummary$quantiles)
-  
-  muIdx=grep("mu",row.names(posteriorStats))
-  posteriorMu = posteriorStats[muIdx,]
-  
-  aIdx=grep("a",row.names(posteriorStats))
-  posteriorA = posteriorStats[aIdx,]
-  posteriorAQuantiles = posteriorQuantiles[aIdx,]
-  
-  cum.weightIdx=grep("cum.weight",row.names(posteriorStats))
-  posteriorCum.weight = posteriorStats[cum.weightIdx,]
-  
-  sumD1Idx=grep("sumD1",row.names(posteriorStats))
-  posteriorSumD1 = posteriorStats[sumD1Idx,]
-  posteriorSumD1Quantiles = posteriorQuantiles[sumD1Idx,]
 
+# Create data frames for these variables to facilitate plotting  
 posteriorYearlyWeights = data.frame(YearIntoPast = 0:4, 
                                     Weight = posteriorSumD1$Mean/sum(posteriorSumD1$Mean), 
                                     min = posteriorSumD1Quantiles$X2.5./sum(posteriorSumD1$Mean), 
@@ -57,26 +40,23 @@ priorYearlyWeights = data.frame(YearIntoPast = 0:4,
                                 min = priorSumD1Quantiles$X2.5./sum(priorSumD1$Mean), 
                                 max = priorSumD1Quantiles$X97.5./sum(priorSumD1$Mean))
 
-
-plot1 <- ggplot(posteriorYearlyWeights,aes(YearIntoPast,Weight,ymin = min, ymax = max)) + 
-  geom_ribbon(data=priorYearlyWeights,fill="grey70") +
-  geom_line(data=priorYearlyWeights) +
-  geom_pointrange(data=posteriorYearlyWeights) 
-
-aDefinitions=c("PPT","0-5","5-15","15-30",">30")
-aDefinitions=factor(aDefinitions,levels=aDefinitions)
+aDefinitions=factor(c("PPT","E_0-5","E_5-15","E_15-30","E_>30"),levels=c("PPT","E_0-5","E_5-15","E_15-30","E_>30")) # Define the corresponding variables for the alpha parameters
 
 posteriorYearlyA = data.frame(aDefinitions, 
                               Covariates = posteriorA$Mean[2:6], 
                               min = posteriorAQuantiles$X2.5.[2:6], 
                               max = posteriorAQuantiles$X97.5.[2:6])
 
+# Replicate the plot from Ogle et al 2015 for the alpha and yearly weight (page 227)
+plot1 <- ggplot(posteriorYearlyWeights,aes(YearIntoPast,Weight,ymin = min, ymax = max)) + 
+  geom_ribbon(data=priorYearlyWeights,fill="grey70") +
+  geom_line(data=priorYearlyWeights) +
+  geom_pointrange(data=posteriorYearlyWeights) 
+
 plot2 <- ggplot(posteriorYearlyWeights,aes(aDefinitions,Covariates,ymin = min, ymax = max)) + 
   geom_pointrange(data=posteriorYearlyA) 
 
 grid.arrange(plot1, plot2, nrow = 1)
-
-
 
 
 
