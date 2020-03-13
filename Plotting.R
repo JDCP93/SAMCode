@@ -4,6 +4,9 @@ library(gridExtra)
 
 setwd("/Users/climate/Documents/SAM Modelling")
 
+#Load ANPP and Precip data
+ANPPandPrecip = read.table("data/dataset2.csv", header = TRUE, stringsAsFactors = FALSE)
+NPPobserved=ANPPandPrecip[,2] # Yearly NPP data - comment this out to obtain the priors
   
 # Load the prior and posterior data
 load("priorSummary.RData")
@@ -23,6 +26,7 @@ posteriorStats = data.frame(posteriorSummary$statistics)
 posteriorQuantiles = data.frame(posteriorSummary$quantiles)
 
 posteriorMu = posteriorStats[grep("mu",row.names(posteriorStats)),]
+posteriorMuQuantiles = posteriorQuantiles[grep("mu",row.names(posteriorStats)),]
 posteriorA = posteriorStats[grep("a",row.names(posteriorStats)),]
 posteriorAQuantiles = posteriorQuantiles[grep("a",row.names(posteriorStats)),]
 posteriorCum.weight = posteriorStats[grep("cum.weight",row.names(posteriorStats)),]
@@ -59,5 +63,23 @@ plot2 <- ggplot(posteriorYearlyWeights,aes(aDefinitions,Covariates,ymin = min, y
 grid.arrange(plot1, plot2, nrow = 1)
 
 
+NPPobs = data.frame(Year=1:nrow(ANPPandPrecip)+1938,
+                    NPP_obs = NPPobserved)
+NPPmod = data.frame(Year=1:nrow(ANPPandPrecip)+1938,
+                    NPP_mod = posteriorMu[,1],
+                    NPP_modmin = posteriorMuQuantiles[,1],
+                    NPP_modmax = posteriorMuQuantiles[,5])
+
+plot3 <- ggplot(NPPobs) +
+  geom_line(data=NPPobs,aes(Year,NPP_obs),color='steelblue',size=3) +
+  geom_point(data=NPPobs,aes(Year,NPP_obs),color='steelblue',size=3) +
+         geom_line(data=NPPmod,aes(Year,NPP_mod)) +
+         geom_pointrange(data=NPPmod,aes(Year,NPP_mod,ymin=NPP_modmin,ymax=NPP_modmax)) 
 
 
+
+grid.arrange(plot3)
+
+R2_1=(sum((posteriorMu[,1]-mean(NPPobserved,na.rm=TRUE))^2,na.rm=TRUE))/(sum((NPPobserved-mean(NPPobserved,na.rm=TRUE))^2,na.rm=TRUE))
+
+R2_2=1-(sum((posteriorMu[,1]-NPPobserved)^2,na.rm=TRUE))/(sum((NPPobserved-mean(NPPobserved,na.rm=TRUE))^2,na.rm=TRUE))
