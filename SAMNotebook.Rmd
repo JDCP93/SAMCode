@@ -347,7 +347,75 @@ Two more basic model runs were produced - one with 5 year lag but 60 time blocks
 (i.e. each month had a unique weight) and one with a 1 year lag and 12 time 
 blocks.
 
+Attempts to plot the results of modelled NPP vs observed are currently struggling
+to offset the error bars for clarity...
+
+Therefore, we shall just compare R2 values for now
+
 ```{r}
-# Load 
+# # Define a function that loads our model output files since all outputs have the
+# same variable name
+loadRData = function(filename){
+      load(filename)
+      filename <- get(ls()[grep("Summary",ls())])
+      }
+
+# Load the model outputs
+priorlag5block38 <- loadRData("priorSummary.Rdata")
+posteriorlag5block38 <- loadRData("posteriorSummary.Rdata")
+priorlag1block12 <- loadRData("priorSummary_1lag_12blocks.Rdata")
+posteriorlag1block12 <- loadRData("posteriorSummary_1lag_12blocks.Rdata")
+priorlag5block60 <- loadRData("priorSummary_5lag_60blocks.Rdata")
+posteriorlag5block60 <- loadRData("posteriorSummary_5lag_60blocks.Rdata")
+
+# Extract the statistics and the quantiles
+Stats = list("pri5.38"=priorlag5block38$statistics,
+             "pri5.60"=priorlag5block60$statistics,
+             "pri1.12"=priorlag1block12$statistics,
+             "pos5.38"=posteriorlag5block38$statistics,
+             "pos5.60"=posteriorlag5block60$statistics,
+             "pos1.12"=posteriorlag1block12$statistics)
+
+Quantiles = list("pri5.38"=priorlag5block38$quantiles,
+                 "pri5.60"=priorlag5block60$quantiles,
+                 "pri1.12"=priorlag1block12$quantiles,
+                 "pos5.38"=posteriorlag5block38$quantiles,
+                 "pos5.60"=posteriorlag5block60$quantiles,
+                 "pos1.12"=posteriorlag1block12$quantiles)
+
+# Extract the modelled NPP
+NPP5.38 = data.frame("Year"=1:52+1938,
+                     "mean"=Stats$pos5.38[grep("mu",row.names(Stats$pos5.38)),1],
+                     "min"=Quantiles$pos5.38[grep("mu",row.names(Quantiles$pos5.38)),1],
+                     "max"=Quantiles$pos5.38[grep("mu",row.names(Quantiles$pos5.38)),5])
+NPP5.60 = data.frame("Year"=1:52+1938,
+                     "mean"=Stats$pos5.60[grep("mu",row.names(Stats$pos5.60)),1],
+                     "min"=Quantiles$pos5.60[grep("mu",row.names(Quantiles$pos5.60)),1],
+                     "max"=Quantiles$pos5.60[grep("mu",row.names(Quantiles$pos5.60)),5])
+NPP1.12 = data.frame("Year"=1:52+1938,
+                     "mean"=Stats$pos1.12[grep("mu",row.names(Stats$pos1.12)),1],
+                     "min"=Quantiles$pos1.12[grep("mu",row.names(Quantiles$pos1.12)),1],
+                     "max"=Quantiles$pos1.12[grep("mu",row.names(Quantiles$pos1.12)),5])
+
+#Load ANPP and Precip data and place into dataframe
+ANPPandPrecip = read.table("data/dataset2.csv", header = TRUE, 
+                           stringsAsFactors = FALSE)
+NPPobserved=data.frame("Year" = 1:52+1938,"NPP"=ANPPandPrecip[,2])
+
+RSS5.38 = sum((NPP5.38$mean-NPPobserved$NPP)^2,na.rm=TRUE)
+RSS5.60 = sum((NPP5.60$mean-NPPobserved$NPP)^2,na.rm=TRUE)
+RSS1.12 = sum((NPP1.12$mean-NPPobserved$NPP)^2,na.rm=TRUE)
+TSS = sum((NPPobserved$NPP-mean(NPPobserved$NPP,na.rm=TRUE))^2,na.rm=TRUE)
+R2_5.38=1-(RSS5.38)/(TSS)
+R2_5.60=1-(RSS5.60)/(TSS)
+R2_1.12=1-(RSS1.12)/(TSS)
+
+print(paste("Lag of 5 years and 38 time blocks gives R2 = ", round(R2_5.38,3), sep = ""))
+print(paste("Lag of 5 years and 60 time blocks gives R2 = ", round(R2_5.60,3), sep = ""))
+print(paste("Lag of 1 year and 12 time blocks gives R2 = ", round(R2_1.12,3), sep = ""))
 ```
 
+As can be seen, looking only at 1 year gives a substantially worse fit.
+Meanwhile, having 60 timeblocks rather than 38 only marginally improves the fit
+while dramatically increasing the model runtime. Calculating the DIC would 
+probably show a significant preference for the 5.38 run.
