@@ -262,13 +262,15 @@ NPPmod = data.frame(Year=1:nrow(ANPPandPrecip)+1938,
 plot3 <- ggplot(NPPobs) +
   geom_line(data=NPPobs,aes(Year,NPP_obs),color='steelblue',size=3) +
   geom_point(data=NPPobs,aes(Year,NPP_obs),color='steelblue',size=3,na.rm=TRUE) +
-         geom_line(data=NPPmod,aes(Year,NPP_mod)) +
-         geom_pointrange(data=NPPmod,aes(Year,
-                                         NPP_mod,
-                                         ymin=NPP_modmin,
-                                         ymax=NPP_modmax)) 
-
-
+  geom_ribbon(data=NPPmod, aes(x=Year, ymin=NPP_modmin, ymax=NPP_modmax), fill="grey70", alpha=0.4) +
+  geom_line(data=NPPmod,aes(Year,NPP_mod)) +
+  theme_bw() +
+  theme(axis.line=element_line(colour = "black"),
+    panel.grid.major=element_blank(),
+    panel.grid.minor=element_blank(),
+    panel.border=element_blank(),
+    panel.background=element_blank()) 
+  
 
 grid.arrange(plot3)
 ```
