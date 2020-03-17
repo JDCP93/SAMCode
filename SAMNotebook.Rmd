@@ -85,6 +85,9 @@ Precip = read.table("data/dataset3.csv",
                            37, 37, 37, 38, 38, 38), 
                     nrow=Nlag,ncol=12,byrow = TRUE)
 
+# makes more sense if you visualise it...
+block
+
 # Define the parameters for the model operation
 # samples to be kept after burn in
 samples <- 50000 
