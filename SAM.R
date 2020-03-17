@@ -105,16 +105,16 @@ fit <- coda.samples(jags, n.iter=samples, n.burnin=burn, thin=thin,
                     variable.names=parameters)
 
 # Save the summary of the output as either the prior or posterior
-# if NPP data isn't used in the model runs 
+# if NPP data isn't used in the model runs
 # then the output is the prior distributions
- if (length(Data$NPP)==0){ 
-      priorSummary = summary(fit)
-      save("priorSummary",file="priorSummary.Rdata")
- } else{ 
-# NPP data is specified and the output is the posterior distributions
-      posteriorSummary = summary(fit)
-      save("posteriorSummary",file="posteriorSummary.Rdata")
-   }
+if (length(Data$NPP) == 0) {
+  priorSummary = summary(fit)
+  save("priorSummary", file = "priorSummary.Rdata")
+} else{
+  # NPP data is specified and the output is the posterior distributions
+  posteriorSummary = summary(fit)
+  save("posteriorSummary", file = "posteriorSummary.Rdata")
+}
 
 
 

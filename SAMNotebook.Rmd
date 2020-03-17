@@ -1,9 +1,11 @@
 ---
 title: "Stochastic Antecedent Modelling Notebook"
-output: html_notebook
-author: Jon Page
-Date: 16/03/2020
+author: "Jon Page"
 Last Updated: date()
+output:
+  html_document:
+    df_print: paged
+Date: 16/03/2020
 ---
 
 ***
@@ -45,9 +47,7 @@ library(rjags) # Source rjags for Bayesian analysis
 library(ggplot2) # Source ggplot2 to plot results
 library(gridExtra) # Source gridExtra for better plots
 
-current_path <- getActiveDocumentContext()$path # Find location of this script
-setwd(dirname(current_path )) # Set this to working directory
-
+setwd(getwd())
 
 # First import the data (csv files stolen from De Kauwe - data is provided in 
 # pdf form in Ogle 2015)
@@ -84,6 +84,9 @@ Precip = read.table("data/dataset3.csv",
                            32, 33, 33, 33, 34, 34, 34, 35, 35, 35, 36, 36, 36, 
                            37, 37, 37, 38, 38, 38), 
                     nrow=Nlag,ncol=12,byrow = TRUE)
+
+# makes more sense if you visualise it...
+block
 
 # Define the parameters for the model operation
 # samples to be kept after burn in
@@ -259,13 +262,15 @@ NPPmod = data.frame(Year=1:nrow(ANPPandPrecip)+1938,
 plot3 <- ggplot(NPPobs) +
   geom_line(data=NPPobs,aes(Year,NPP_obs),color='steelblue',size=3) +
   geom_point(data=NPPobs,aes(Year,NPP_obs),color='steelblue',size=3,na.rm=TRUE) +
-         geom_line(data=NPPmod,aes(Year,NPP_mod)) +
-         geom_pointrange(data=NPPmod,aes(Year,
-                                         NPP_mod,
-                                         ymin=NPP_modmin,
-                                         ymax=NPP_modmax)) 
-
-
+  geom_ribbon(data=NPPmod, aes(x=Year, ymin=NPP_modmin, ymax=NPP_modmax), fill="grey70", alpha=0.4) +
+  geom_line(data=NPPmod,aes(Year,NPP_mod)) +
+  theme_bw() +
+  theme(axis.line=element_line(colour = "black"),
+    panel.grid.major=element_blank(),
+    panel.grid.minor=element_blank(),
+    panel.border=element_blank(),
+    panel.background=element_blank()) 
+  
 
 grid.arrange(plot3)
 ```
