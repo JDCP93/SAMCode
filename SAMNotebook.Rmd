@@ -1,9 +1,11 @@
 ---
 title: "Stochastic Antecedent Modelling Notebook"
-output: html_notebook
-author: Jon Page
-Date: 16/03/2020
+author: "Jon Page"
 Last Updated: date()
+output:
+  html_document:
+    df_print: paged
+Date: 16/03/2020
 ---
 
 ***
@@ -45,9 +47,7 @@ library(rjags) # Source rjags for Bayesian analysis
 library(ggplot2) # Source ggplot2 to plot results
 library(gridExtra) # Source gridExtra for better plots
 
-current_path <- getActiveDocumentContext()$path # Find location of this script
-setwd(dirname(current_path )) # Set this to working directory
-
+setwd(getwd())
 
 # First import the data (csv files stolen from De Kauwe - data is provided in 
 # pdf form in Ogle 2015)
