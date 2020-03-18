@@ -484,6 +484,42 @@ for (i in 2:nrow(p)){
 
 ```
 
+***
+
+# Model Comparison
+
+Having spoken to Manon, we want to try and rank each model by a quantile rank
+method.
+
+First we put all the available outputs into a dataframe
+
+```{r}
+# Find all outputs available
+models = list.files(pattern = "SAM_posterior")
+# Load them
+for (i in 1:length(k)){
+  load(k[i])
+}
+# Find all the model outputs we've loaded
+models = objects(pattern = "SAM_posterior")
+
+get(models[1])$NMSE
+
+dd = data.frame(t(sapply(SAM_posterior_1_1,c)))
+
+MODELS = data.frame(row.names=models)
+
+for (i in 1:length(models)){
+MODELS[i,1:11]=data.frame(t(sapply(get(models[i]),c)))
+}
+
+
+# The metrics are as such
+# Minimise: DIC, MAE, Q5, Q95, NMSE
+# Maximise: R2
+```
+
+
 
 ** To do:
 + Produce a script/function that compares model outputs by quantile ranking the 

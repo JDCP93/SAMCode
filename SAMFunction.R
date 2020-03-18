@@ -67,7 +67,7 @@ SAM <- function(dataset1,dataset2,Nlag,block,prior=FALSE){
    
    # Define the parameters for the model operation
    # samples to be kept after burn in
-   samples = 500
+   samples = 50000
    # iterations for burn in
    burn = samples * 0.1 
    # number of iterations where samplers adapt behaviour to maximise efficiency
