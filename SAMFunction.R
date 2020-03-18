@@ -161,3 +161,33 @@ SAM <- function(dataset1,dataset2,Nlag,block,prior=FALSE){
    }
 }
 
+
+
+
+timeblocks <- function(Y1,Y2,Y3,Y6,Y12){
+   
+   # Function that takes an input of 5 integers and returns a length of lag and
+   # a block of monthly weights for the SAM function
+   # 
+   # Inputs:
+   # - Y1 = number of years for which each month is assigned a unique weight 
+   # - Y2 = number of years for which every 2 months are grouped under a weight
+   # - Y3 = number of years for which every 3 months are grouped under a weight
+   # - Y6 = number of years for which every 6 months are grouped under a weight
+   # - Y12 = number of years for which the entire year is grouped under a weight
+   # 
+   # Outputs:
+   # - Nlag = the total number of past years we assign weights to
+   # - block = a Nlag x 12 matrix of monthly weight identifiers 
+   
+   Nlag = Y1+Y2+Y3+Y6+Y12
+   timeblocks = c((1:(Y1*12))*(Y1>0),
+                  ((12*Y1)+rep(1:(6*Y2),each=2))*(Y2>0),
+                  ((12*Y1)+(6*Y2)+rep(1:(4*Y3),each=3))*(Y3>0),
+                  ((12*Y1)+(6*Y2)+(4*Y3)+rep(1:(2*Y6),each=6))*(Y6>0),
+                  ((12*Y1)+(6*Y2)+(4*Y3)+(2*Y6)+rep(1:Y12,each=12))*(Y12>0))
+   
+   timeblocks = timeblocks[timeblocks!=0]
+   block = matrix(timeblocks,nrow = Nlag,ncol = 12, byrow=TRUE)
+   lag = list("Nlag"=Nlag,"block"=block)
+}
