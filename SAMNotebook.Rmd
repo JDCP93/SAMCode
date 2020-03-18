@@ -7,6 +7,10 @@ output:
     df_print: paged
 Date: 16/03/2020
 ---
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(cache = TRUE)
+```
+
 
 ***
 # Introduction
@@ -160,8 +164,6 @@ We now want to plot figure 2 from Ogle et al for the NPP model to compare our
 results to theirs.
 
 ```{r}
-library(ggplot2)
-library(gridExtra)
 
 # Yearly NPP data
 NPPobserved=ANPPandPrecip[,2] 
@@ -245,6 +247,10 @@ prior do not increase for years 3 and 4 as seen in Ogle et al.
 Ogle's lecture notes state that the 2.5 to 97.5 percentile specifies a CI which
 is what is used here. I am unsure why Ogle's CIs expand and ours don't. 
 
+**The above comments are no longer relevant. block was being assigned incorrectly
+and since this has been fixed, the above issue is resolved. Our graph matches 
+that from the paper, insofar as stochastic methods will allow.**
+
 ***
 
 We now plot the observed NPP against our modelled NPP
@@ -260,8 +266,8 @@ NPPmod = data.frame(Year=1:nrow(ANPPandPrecip)+1938,
                     NPP_modmax = posMuQntls[,5])
 
 plot3 <- ggplot(NPPobs) +
-  geom_line(data=NPPobs,aes(Year,NPP_obs),color='steelblue',size=3) +
-  geom_point(data=NPPobs,aes(Year,NPP_obs),color='steelblue',size=3,na.rm=TRUE) +
+  geom_line(data=NPPobs,aes(Year,NPP_obs),color='steelblue',size=2) +
+  geom_point(data=NPPobs,aes(Year,NPP_obs),color='steelblue',size=2,na.rm=TRUE) +
   geom_ribbon(data=NPPmod, aes(x=Year, ymin=NPP_modmin, ymax=NPP_modmax), fill="grey70", alpha=0.4) +
   geom_line(data=NPPmod,aes(Year,NPP_mod)) +
   theme_bw() +
@@ -274,6 +280,8 @@ plot3 <- ggplot(NPPobs) +
 
 grid.arrange(plot3)
 ```
+
+
 The blue line is the observed NPP. We can see that for the vast majority of years
 the observed NPP falls within the CI of our model output. 2 years do not have 
 observed NPP which is why we have gaps in the graph.
@@ -325,6 +333,10 @@ Additional the point at which c = 0.9 is first within the CI of a weight is 48
 for us, while Ogle has this at 42.
 
 Combined with the mismatching priors in Figure 2, this is concerning.
+
+**The above comments are no longer relevant. block was being assigned incorrectly
+and since this has been fixed, the above issue is resolved. Our graph matches 
+that from the paper, insofar as stochastic methods will allow.**
 
 
 *** 
@@ -424,3 +436,16 @@ As can be seen, looking only at 1 year gives a substantially worse fit.
 Meanwhile, having 60 timeblocks rather than 38 only marginally improves the fit
 while dramatically increasing the model runtime. Calculating the DIC would 
 probably show a significant preference for the 5.38 run.
+
+
+*** 
+
+# Creating a function
+
+In an attempt to automate more of the modelling process, I have written a function
+that performs the job of the old wrapper script
+
+```{r}
+source("SAMFunction.R")
+```
+
