@@ -443,9 +443,34 @@ probably show a significant preference for the 5.38 run.
 # Creating a function
 
 In an attempt to automate more of the modelling process, I have written a function
-that performs the job of the old wrapper script
+that performs the job of the old wrapper script.
+
+I have also written a function that produces Nlag and block if we input the 
+number of years that are grouped into each of 1,2,3,6,and 12 monthly weights.
+Ideally this function would provide greater flexibility.
+
+I have also written a little script that produces every permutation of assigning
+0,1 or 2 years to each of the categories. This would give us 243 different
+categorisations to run the model for - this is probably a bit optimistic. 
+
+However, running these and comparing model outputs may well show us something
+about lag times. Namely we will have tested lags of length 1 year up to 10 years.
+We will also have tested internal weighting of months.
 
 ```{r}
 source("SAMFunction.R")
+
+t = expand.grid(rep(list(0:2), 5))
+p = matrix(c(t$Var1,t$Var2,t$Var3,t$Var4,t$Var5),nrow = length(t$Var1))
+
+print(head(t))
+
+for (i in 1:nrow(p)){
+  for (j in 1:5){
+  assign(paste("Y",j,sep=""), p[i,j])  
+  }
+ assign(paste("block_",i,sep=""), timeblocks(Y1,Y2,Y3,Y4,Y5))
+}
+
 ```
 
