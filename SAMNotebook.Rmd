@@ -458,18 +458,26 @@ about lag times. Namely we will have tested lags of length 1 year up to 10 years
 We will also have tested internal weighting of months.
 
 ```{r}
+# Source the function
 source("SAMFunction.R")
 
-t = expand.grid(rep(list(0:2), 5))
+# Create a grid of permutations of 5 values either 0, 1 or 2
+t = expand.grid(rep(list(0:1), 5))
+# Turn this into a matrix for easier extraction
 p = matrix(c(t$Var1,t$Var2,t$Var3,t$Var4,t$Var5),nrow = length(t$Var1))
-
+# Print the head of t to visualise this
 print(head(t))
 
-for (i in 1:nrow(p)){
+# For each row of p, extract the Yj values and run timeblock
+for (i in 2:nrow(p)){
   for (j in 1:5){
-  assign(paste("Y",j,sep=""), p[i,j])  
+    assign(paste("Y",j,sep=""), p[i,j])  
   }
- assign(paste("block_",i,sep=""), timeblocks(Y1,Y2,Y3,Y4,Y5))
+ timeblock = timeblocks(Y1,Y2,Y3,Y4,Y5)
+ Nlag = timeblock$Nlag
+ block = timeblock$block
+ # For the timeblock created, run the model
+ SAM("data/dataset2.csv","data/dataset3.csv",Nlag,block,prior=FALSE)
 }
 
 ```

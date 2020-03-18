@@ -31,6 +31,7 @@ SAM <- function(dataset1,dataset2,Nlag,block,prior=FALSE){
    # load the Bayesian package
    library(rjags) 
    
+   
    # Load the input data
    ANPPandPrecip = read.table(dataset1, 
                               header = TRUE, 
@@ -180,14 +181,19 @@ timeblocks <- function(Y1,Y2,Y3,Y6,Y12){
    # - Nlag = the total number of past years we assign weights to
    # - block = a Nlag x 12 matrix of monthly weight identifiers 
    
+   # Calculate Nlag as sum of years
    Nlag = Y1+Y2+Y3+Y6+Y12
+   # Assign the weight ids, with weight id equal to 0 where category of years
+   # isn't used (I believe this could be programmed more efficiently) 
    timeblocks = c((1:(Y1*12))*(Y1>0),
                   ((12*Y1)+rep(1:(6*Y2),each=2))*(Y2>0),
                   ((12*Y1)+(6*Y2)+rep(1:(4*Y3),each=3))*(Y3>0),
                   ((12*Y1)+(6*Y2)+(4*Y3)+rep(1:(2*Y6),each=6))*(Y6>0),
                   ((12*Y1)+(6*Y2)+(4*Y3)+(2*Y6)+rep(1:Y12,each=12))*(Y12>0))
-   
+   # Remove the weight ids of 0
    timeblocks = timeblocks[timeblocks!=0]
+   # Define block
    block = matrix(timeblocks,nrow = Nlag,ncol = 12, byrow=TRUE)
+   # Combine into 1 output
    lag = list("Nlag"=Nlag,"block"=block)
 }
