@@ -469,7 +469,8 @@ p = matrix(c(t$Var1,t$Var2,t$Var3,t$Var4,t$Var5),nrow = length(t$Var1))
 # Print the head of t to visualise this
 print(head(t))
 
-# For each row of p, extract the Yj values and run timeblock
+# For each row of p but the first (which has a lag of 0), 
+# extract the Yj values and run timeblock
 for (i in 2:nrow(p)){
   for (j in 1:5){
     assign(paste("Y",j,sep=""), p[i,j])  
