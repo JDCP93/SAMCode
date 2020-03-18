@@ -1,0 +1,163 @@
+SAM <- function(dataset1,dataset2,Nlag,block,prior=FALSE){
+   
+   # Function that runs a SAM model as per Ogle et al 2015 and outputs modelled
+   # NPP as well as a variety of performance metrics
+   #  
+   # Inputs:
+   # - dataset1 = a csv file with 7 columns - Year, NPP, YearID, Event1, 
+   #                 Event2, Event3, Event4
+   # - dataset2 = a csv file with 13 columns - 1st column is Year, 2nd-13th
+   #                 column are monthly precip totals in mm
+   # - Nlag = number of years of antecedent precipitation to consider
+   # - block = a Nlag x 12 matrix where [i,j] is the time block that month i
+   #           of year j is assigned to
+   # - prior = Boolean operator. Default is FALSE. If TRUE, suppress NPP 
+   #           observation data so that priors are calculated
+   # Outputs:
+   # - NPPmod = 4 vectors of modelled NPP mean, sd, 2.5th and 97.5quantile
+   # - alpha = mean, sd and quantiles for covariates in calculation of NPP
+   # - cumulativeWeights = mean, sd and quantiles for cumulative monthly weights
+   # - yearlyWeights = mean, sd and quantiles for normalised yearly weights
+   # - monthlyWeights = mean, sq and quantiles for ordered monthly weights
+   # - DIC = Deviance Information Criterion 
+   # - R2 = R^2 measure of modelled vs observed NPP
+   # - MAE = mean absolute error of modelled vs observed NPP
+   # - Q5 = 5th quantile of mean NPP
+   # - Q95 = 95th quantile of mean NPP
+   # - NMSE = normalised mean square error of modelled vs observed NPP
+   
+    
+   
+   # load the Bayesian package
+   library(rjags) 
+   
+   # Load the input data
+   ANPPandPrecip = read.table(dataset1, 
+                              header = TRUE, 
+                              stringsAsFactors = FALSE)
+   
+   Precip = read.table(dataset2, 
+                       header = TRUE, 
+                       stringsAsFactors = FALSE)
+   
+   # Create input list for the Bayesian model
+   Data = list('Nlag' = Nlag
+               ,'block'= block
+               # number of years for which NPP and precip event data are available,
+               ,'N' = nrow(ANPPandPrecip) 
+               # number of years for which monthly precipitation data is available
+               ,'Nyrs' = nrow(Precip) 
+               # number of time blocks the months are partitioned into
+               ,'Nblocks' = max(block)
+               # Monthly precip data
+               ,'ppt' = Precip[,-1] 
+               # Year ID for NPP
+               ,'YearID' = ANPPandPrecip$YearID 
+               # Yearly precip event data
+               ,'Event' = ANPPandPrecip[,c(4,5,6,7)] 
+               # Yearly NPP data - comment this out to obtain the priors
+               ,'NPP' = ANPPandPrecip[,2] 
+   )
+   
+   # If we're calculating priors, suppress the observed data
+   if (prior==TRUE){
+      Data$NPP = NULL
+   }else{}
+   
+   # Define the parameters for the model operation
+   # samples to be kept after burn in
+   samples = 500
+   # iterations for burn in
+   burn = samples * 0.1 
+   # number of iterations where samplers adapt behaviour to maximise efficiency
+   nadapt = 100  
+   # The number of MCMC chains to run
+   nchains = 4 
+   # thinning rate
+   # save every thin-th iteration to reduce correlation between 
+   # consecutive values in the chain
+   thin = 10 
+   
+   # Decide the variables to track
+   parameters = c('mu','a','weightOrdered','cum.weight','sumD1') 
+   
+   # Put the model system into a variable
+   jags = jags.model('Model.R', data=Data, n.chains=nchains, n.adapt=nadapt) 
+   
+   # Generate the MCMC chain (this is basically running the Bayesian analysis)
+   fit = coda.samples(jags, n.iter=samples, n.burnin=burn, thin=thin,
+                      variable.names=parameters)
+   # Assign the summary of the model output to a variable
+   Summary = summary(fit)
+   
+   # For each of our tracked variables, compile the mean, 2.5 and 97.5 quantiles.
+   for (i in parameters){
+      df = data.frame("mean"=Summary$statistics[grep(i,row.names(Summary$statistics)),1],
+                      "sd"=Summary$statistics[grep(i,row.names(Summary$statistics)),2],
+                      "min"=Summary$quantiles[grep(i,row.names(Summary$quantiles)),1],
+                      "max"=Summary$quantiles[grep(i,row.names(Summary$quantiles)),5])
+      name = paste(i,"Stats",sep="")
+      assign(name,df)
+   }
+   
+   # Normalise the yearly weights
+   sumD1Stats$sd = sumD1Stats$sd/sum(sumD1Stats$mean,na.rm=TRUE)
+   sumD1Stats$min = sumD1Stats$min/sum(sumD1Stats$mean,na.rm=TRUE)
+   sumD1Stats$max = sumD1Stats$max/sum(sumD1Stats$mean,na.rm=TRUE)
+   sumD1Stats$mean = sumD1Stats$mean/sum(sumD1Stats$mean,na.rm=TRUE)
+   
+   # if priors are being calculated, the performance metrics are irrelevant
+   if (prior==TRUE){ 
+      output = data.frame("NPPmod"=muStats,
+                          "alphas"=aStats,
+                          "cumulativeWeights"=cum.weightStats,
+                          "yearlyWeights"=sumD1Stats,
+                          "monthlyWeights"=weightOrderedStats)
+      name = paste("SAM_prior_",Nlag,"_",Data$Nblocks,sep="")  
+      assign(name,output)
+      save(list=c(name),file=paste(name,".Rdata",sep=""))
+   }else{
+   # for the posteriors calculate the performance metrics and output
+      # Calculate R2
+      RSS = sum((muStats$mean-Data$NPP)^2,na.rm=TRUE)
+      TSS = sum((Data$NPP-mean(Data$NPP,na.rm=TRUE))^2,na.rm=TRUE)
+      R2 = 1-RSS/TSS
+   
+      # Calculate MAE
+      MAE = mean(abs(muStats$mean-Data$NPP),na.rm=TRUE)
+   
+      # Calculate quantiles
+      Q5 = abs(quantile(muStats$mean,probs=0.05)-quantile(Data$NPP,probs=0.05,na.rm=TRUE))
+      Q95 = abs(quantile(muStats$mean,probs=0.95)-quantile(Data$NPP,probs=0.95,na.rm=TRUE))
+   
+      # Calculate NMSE
+      num = mean(RSS,na.rm=TRUE)
+      den = mean(muStats$mean,na.rm=TRUE)*mean(Data$NPP,na.rm=TRUE)
+      NMSE = num/den
+   
+      # Calculate DIC
+      dic = dic.samples(jags, n.iter=1000,type="pD")
+      dbar = sum(dic$deviance[grep("NPP",names(dic$deviance))])
+      pd = sum(dic$penalty[grep("NPP",names(dic$penalty))])
+      DIC = dbar+pd
+   
+      output = list("NPPmod"=muStats,
+                          "alphas"=aStats,
+                          "cumulativeWeights"=cum.weightStats,
+                          "yearlyWeights"=sumD1Stats,
+                          "monthlyWeights"=weightOrderedStats,
+                          "DIC"=DIC,
+                          "R2"=R2,
+                          "MAE"=MAE,
+                          "Q5"=Q5,
+                          "Q95"=Q95,
+                          "NMSE"=NMSE)
+   
+      # Write output file
+      name = paste("SAM_posterior_",Nlag,"_",Data$Nblocks,sep="")
+      assign(name,output)
+      save(list=c(name),file=paste(name,".Rdata",sep=""))
+   
+   }
+}
+
