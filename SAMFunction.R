@@ -197,3 +197,34 @@ timeblocks <- function(Y1,Y2,Y3,Y6,Y12){
    # Combine into 1 output
    lag = list("Nlag"=Nlag,"block"=block)
 }
+
+
+SpringBlock <- function(Nlag,Unique.years=TRUE){
+  # Function that creates timeblocks where each year is split into spring
+  # and non-spring blocks. Spring in Colorado is ~April,May,June
+  # 
+  # Inputs:
+  # - Nlag = number of past years we want to consider
+  # - Unique.years = boolean operator. If TRUE, each year has unique weights
+  # for its spring and non-spring rainfall. If FALSE, all spring rain received
+  # over the lag period is assigned the same weight, and similarly for non-spring
+  # 
+  # Outputs:
+  # - Nlag = same as input. Included for consistency with timeblocks function
+  # - block = a Nlag x 12 matrix of monthly weight identifiers
+   
+  # if we want each years to have unique weights
+  if (Unique.years==TRUE){
+    block = NULL
+    for (i in seq(1,Nlag*2,by=2)){
+      row = c(rep(i,3),rep(i+1,3),rep(i,6))
+      block = c(block,row)}
+    block = matrix(block,nrow=Nlag,ncol=12,byrow=TRUE)
+    print(block)
+  } else {
+  # otherwise we just repeat the first year as many times as needed
+      block = rep(c(rep(1,3),rep(2,3),rep(1,6)),Nlag)
+      block = matrix(block,nrow=Nlag,ncol=12,byrow=TRUE)
+  }
+  lag = list("Nlag"=Nlag,"block"=block)
+}

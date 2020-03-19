@@ -596,17 +596,22 @@ formatStyle(x,1:6, backgroundColor = styleInterval(brk, clr))
 
 ```
 
+It would be nice to combine the above into a function - just sayin.
 
-** To do:
-+ Produce a script/function that compares model outputs by quantile ranking the 
+
+
+**To do:
++ Produce a function that compares model outputs by quantile ranking the 
 model performance metrics
 + Create a function that produces a "block" that groups weight as "spring" rain 
-and non-spring rain
+and non-spring rain - *DONE*
++ Create a more generic SpringBlock function where you can specify the months of
+spring.
 + Create a function that, for a specific length of time N, creates an ensemble of
 models where a model exists for every possible block of N years of observed data
 that has been fed only those years of data and then assessed OOS against the other
 blocks of N years. It will be interesting to model on eg. 1965-1975 with a lag of 
-5 years and then see how model performance compares for 1950-1960 and 1980-1990
+5 years and then see how model performance compares for 1950-1960 and 1980-1990**
 
 
 
