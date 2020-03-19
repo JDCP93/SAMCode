@@ -157,7 +157,7 @@ SAM <- function(dataset1,dataset2,Nlag,block,prior=FALSE){
       # Write output file
       name = paste("SAM_posterior_",Nlag,"_",Data$Nblocks,sep="")
       assign(name,output)
-      save(list=c(name),file=paste(name,".Rdata",sep=""))
+      save(list=c(name),file=paste(name,"_",Sys.Date(),".Rdata",sep=""))
    
    }
 }
