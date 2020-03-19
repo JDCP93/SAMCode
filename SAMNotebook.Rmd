@@ -540,6 +540,28 @@ for (j in 6:11){
 # Maximise: R2
 ```
 
+I am struggling to identify a way to assign ranks to the models for each metric
+such that the ranks also differentiate between absolute model performance.
+
+The below chunk highlights the issue with percentile ranks. Assume these 
+are R2 values and therefore values closer to one are better.
+
+Looking at the vector x, it is clear that the first 23 models have a poor
+performance relative to R2 while the 24th model has a VERY good performance 
+relative to the other models. 
+
+However, assigning the percentile rank implies that 0.02, 0.03, 0.04 and 0.99
+are to be assigned very high ranks while 0.01 has a very low rank. 
+
+This doesn't capture how the models have performed at all. 0.02 isn't better than 
+0.01 and 0.99 is WAY better than 0.04 - none of this is indicated in the ranks.
+
+```{r}
+x = c(rep(0.01,20),0.02,0.03,0.04,0.99)
+rank = percent_rank(signif(x,3))
+names(rank) = x
+rank
+```
 
 
 
