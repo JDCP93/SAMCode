@@ -463,7 +463,7 @@ We will also have tested internal weighting of months.
 source("SAMFunction.R")
 
 # Create a grid of permutations of 5 values either 0, 1 or 2
-t = expand.grid(rep(list(0:1), 5))
+t = expand.grid(rep(list(0:2), 5))
 # Turn this into a matrix for easier extraction
 p = matrix(c(t$Var1,t$Var2,t$Var3,t$Var4,t$Var5),nrow = length(t$Var1))
 # Print the head of t to visualise this
@@ -486,7 +486,23 @@ for (i in 2:nrow(p)){
 
 ***
 
+Overnight on 18/03, I ran the above chunk for ~16 hours. 35 model runs were 
+completed before I stopped the script. 
+
+Quick and dirty analysis of time taken for model runs vs number of years/blocks
+showed that model runtime increased non-linearly (but not quite exponentially)
+as the number of years/blocks increased. This was done by fitting trend lines in
+Excel to the graphs of years/blocks vs runtime. Good R2 values of ~0.90 were 
+seen for power fits (terribly non-rigorous assessment but just to get an idea)
+
+
+***
+
 # Model Comparison
+
+Now that we have a selection of model outputs, we can compare how these performed
+and hopefully make some comments on how far back to calculate lags and what effect
+grouping months into time blocks has on model performance.
 
 Having spoken to Manon, we want to try and rank each model by a quantile rank
 method.
@@ -497,15 +513,11 @@ First we put all the available outputs into a dataframe
 # Find all outputs available
 models = list.files(pattern = "SAM_posterior")
 # Load them
-for (i in 1:length(k)){
-  load(k[i])
+for (i in 1:length(models)){
+  load(models[i])
 }
 # Find all the model outputs we've loaded
 models = objects(pattern = "SAM_posterior")
-
-get(models[1])$NMSE
-
-dd = data.frame(t(sapply(SAM_posterior_1_1,c)))
 
 MODELS = data.frame(row.names=models)
 
@@ -521,6 +533,7 @@ MODELS[i,1:11]=data.frame(t(sapply(get(models[i]),c)))
 
 
 
+
 ** To do:
 + Produce a script/function that compares model outputs by quantile ranking the 
 model performance metrics
@@ -531,4 +544,6 @@ models where a model exists for every possible block of N years of observed data
 that has been fed only those years of data and then assessed OOS against the other
 blocks of N years. It will be interesting to model on eg. 1965-1975 with a lag of 
 5 years and then see how model performance compares for 1950-1960 and 1980-1990
+
+
 
