@@ -50,6 +50,8 @@ library(rstudioapi) # Source rstudioapi to set working directory as needed
 library(rjags) # Source rjags for Bayesian analysis
 library(ggplot2) # Source ggplot2 to plot results
 library(gridExtra) # Source gridExtra for better plots
+library(DT) # Source DT for datatable
+library(dplyr) # Source dplyr for percent_rank
 
 setwd(getwd())
 
@@ -458,7 +460,7 @@ about lag times. Namely we will have tested lags of length 1 year up to 10 years
 We will also have tested internal weighting of months.
 
 
-```{r}
+```{r Model run, eval=FALSE, include=TRUE}
 # Source the function
 source("SAMFunction.R")
 
@@ -557,12 +559,42 @@ This doesn't capture how the models have performed at all. 0.02 isn't better tha
 0.01 and 0.99 is WAY better than 0.04 - none of this is indicated in the ranks.
 
 ```{r}
+# Create fake vector
 x = c(rep(0.01,20),0.02,0.03,0.04,0.99)
+# Calculate percentile rank
 rank = percent_rank(signif(x,3))
+# Print ranks to highlight issue
 names(rank) = x
 rank
 ```
 
+However, I'll stick with this for now. 
+
+```{r}
+# Create a dataframe of ranks
+RANK = MODELS
+# We rank each metric, rounding before and after in an attempt to kind of group
+# similarly performing models together 
+RANK$DICrank = round(percent_rank(-1*signif(MODELS$DIC,3)),2)
+RANK$R2rank = round(percent_rank(signif(MODELS$R2,3)),2)
+RANK$MAErank = round(percent_rank(-1*signif(MODELS$MAE,3)),2)
+RANK$NMSErank = round(percent_rank(-1*signif(MODELS$NMSE,3)),2)
+RANK$Q5rank = round(percent_rank(-1*signif(MODELS$Q5,3)),2)
+RANK$Q95rank = round(percent_rank(-1*signif(MODELS$Q95,3)),2)
+# Remove the old rows
+RANK = RANK[-(1:11)]
+# Sum the ranks in a new column
+RANK$sum = rowSums(RANK)
+# Sort the dataframe by sum descending.
+RANK = RANK[order(-RANK$sum),]
+# Found datatable from https://rstudio.github.io/DT/010-style.html
+# Here, we color each column with higher ranks being more green
+brk <- quantile(RANK, probs = seq(.05, .95, .05), na.rm = TRUE)
+clr <- {paste0("rgb(", round(seq(255, 40, length.out = length(brk) + 1), 0), ",255,", round(seq(255, 40, length.out = length(brk) + 1), 0), ")")}
+x = datatable(RANK)
+formatStyle(x,1:6, backgroundColor = styleInterval(brk, clr))
+
+```
 
 
 ** To do:
