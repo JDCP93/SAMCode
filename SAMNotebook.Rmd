@@ -524,10 +524,14 @@ for (i in 1:length(models)){
 # Find all the model outputs we've loaded
 models = objects(pattern = "SAM_posterior")
 
+# Put these into a dataframe as it will be easier to work with
 MODELS = data.frame(row.names=models)
 
 for (i in 1:length(models)){
 MODELS[i,1:11]=data.frame(t(sapply(get(models[i]),c)))
+}
+for (j in 6:11){
+  MODELS[,j]=sapply(MODELS[,j],c)
 }
 
 
