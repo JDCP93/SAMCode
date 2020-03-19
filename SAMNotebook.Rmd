@@ -495,6 +495,11 @@ as the number of years/blocks increased. This was done by fitting trend lines in
 Excel to the graphs of years/blocks vs runtime. Good R2 values of ~0.90 were 
 seen for power fits (terribly non-rigorous assessment but just to get an idea)
 
+Model outputs can be found at 
+https://unsw-my.sharepoint.com/:f:/g/personal/z5293113_ad_unsw_edu_au/EgNrHWG4bLdOodEOl8gd1s0BHXXHy1CHLQ5XK3wNC7g3Dw?e=CsBhzc
+to avoid the issue of large and possibly changing files being uploaded to
+github.
+
 
 ***
 
