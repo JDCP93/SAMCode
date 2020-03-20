@@ -598,16 +598,151 @@ formatStyle(x,1:6, backgroundColor = styleInterval(brk, clr))
 
 It would be nice to combine the above into a function - just sayin.
 
+***
+
+# Spring Precipitation
+
+I've created a function called SpringBlock which hopefully creates timeblocks
+in such a manner that we can investigate to what extent antecedent spring rain
+influences NPP
+
+```{r}
+SpringBlock <- function(Nlag,Unique.years=TRUE){
+  # Function that creates timeblocks where each year is split into spring
+  # and non-spring blocks. Spring in Colorado is ~April,May,June
+  # 
+  # Inputs:
+  # - Nlag = number of past years we want to consider
+  # - Unique.years = boolean operator. If TRUE, each year has unique weights
+  # for its spring and non-spring rainfall. If FALSE, all spring rain received
+  # over the lag period is assigned the same weight, and similarly for non-spring
+  # 
+  # Outputs:
+  # - Nlag = same as input. Included for consistency with timeblocks function
+  # - block = a Nlag x 12 matrix of monthly weight identifiers
+   
+  # if we want each years to have unique weights
+  if (Unique.years==TRUE){
+    block = NULL
+    for (i in seq(1,Nlag*2,by=2)){
+      row = c(rep(i,3),rep(i+1,3),rep(i,6))
+      block = c(block,row)}
+    block = matrix(block,nrow=Nlag,ncol=12,byrow=TRUE)
+    print(block)
+  } else {
+  # otherwise we just repeat the first year as many times as needed
+      block = rep(c(rep(1,3),rep(2,3),rep(1,6)),Nlag)
+      block = matrix(block,nrow=Nlag,ncol=12,byrow=TRUE)
+  }
+  lag = list("Nlag"=Nlag,"block"=block)
+}
+```
+
+I ran this for 1 to 10 years and then evaluated our model for each block:
+```{r, eval=FALSE}
+source("SAMFunction.R")
+
+for (i in 1:10){
+  # Create the spring/nonspring timeblock
+  timeblock=SpringBlock(i)
+  Nlag = timeblock$Nlag
+  block = timeblock$block
+  # For the timeblock created, run the model
+  SAM("data/dataset2.csv","data/dataset3.csv",Nlag,block,prior=FALSE)
+}
+```
+
+I created the below script which finds all the output files from the model run 
+and then plots them, grouped by length of considered lag and then colours them 
+based on the season of the weight. This took forever. 
+```{r}
+library(ggplot2)
+rm(list=ls())
+# Find all outputs available
+models = list.files(pattern = "2020-03-19")
+# Load them
+for (i in 1:length(models)){
+  load(models[i])
+}
 
 
-**To do:
-+ Produce a function that compares model outputs by quantile ranking the 
-model performance metrics
-+ Create a function that produces a "block" that groups weight as "spring" rain 
-and non-spring rain - *DONE*
-+ Create a more generic SpringBlock function where you can specify the months of
-spring.
-+ Create a function that, for a specific length of time N, creates an ensemble of
+# Find all the model outputs we've loaded
+models = objects(pattern = "SAM_posterior")
+
+# Put these into a dataframe as it will be easier to work with
+MODELS = data.frame(row.names=models)
+
+for (i in 1:length(models)){
+  MODELS[i,1:11]=data.frame(t(sapply(get(models[i]),c)))
+}
+for (j in 6:11){
+  MODELS[,j]=sapply(MODELS[,j],c)
+}
+
+# Put the model with 10 year lag to the end because that's so much nicer
+MODELS[11,]=MODELS[2,]
+MODELS = MODELS[-2,]
+attr(MODELS,"row.names")[10]= c("SAM_posterior_10_20")
+
+# Group the weights into seasons by replacing each 3 month block with its mean
+# which is just the value for each of the months
+uniWeights = matrix(0,nrow=nrow(MODELS),ncol=40)
+for (i in 1:nrow(MODELS)){
+  weights = MODELS$monthlyWeights[[i]]$mean
+  k=0
+  for (j in seq(1,length(weights),by=3)){
+    k = k+1
+    uniWeights[i,k] = mean(weights[j:j+2])
+  }
+}
+# We now perform a sort of normalisation so that the total weight is equal to 
+# the number of years. 
+# for (i in 1:10){
+#   uniWeights[i,] = uniWeights[i,]*i/sum(uniWeights[i,])
+# }
+
+# Make the final plotting dataframe
+plotWeights = data.frame("Weights"=as.vector(t(uniWeights)),
+                         "Block"=rep(1:40,10),
+                         "Season"=rep(c("Oct-Dec","Jul-Sep","Apr-Jun","Jan-Mar"),
+                                      100),
+                         "Model"=rep(c("Lag1","Lag2","Lag3","Lag4","Lag5",
+                                       "Lag6","Lag7","Lag8","Lag9","Lag10"),
+                                     each=40))
+
+# Assign levels so that it plots nicely
+plotWeights$Season=factor(plotWeights$Season,
+                          levels=c("Oct-Dec","Jul-Sep","Apr-Jun","Jan-Mar"))
+
+plotWeights$Model=factor(plotWeights$Model,
+                         levels=c("Lag1","Lag2","Lag3","Lag4","Lag5",
+                                  "Lag6","Lag7","Lag8","Lag9","Lag10"))
+
+# Remove rows where the weight is 0 for aesthetic reasons
+plotWeights = plotWeights[plotWeights$Weights!=0,]
+
+# Plot
+plot1 <- ggplot(plotWeights,aes(x=Block,y=Weights,fill=Season)) +
+  geom_bar(stat="identity", position=position_dodge()) +
+  facet_grid(.~Model,scales = "free_x",switch = "x", space = "free_y")
+
+last_plot()  
+
+```
+
+As can be seen in the graph, for all models, spring rainfall is usually 
+relatively more important than the other seasons.
+
+
+
+**To do:**
+* **Produce a function that compares model outputs by quantile ranking the 
+model performance metrics**
+* **Create a function that produces a "block" that groups weight as "spring" rain 
+and non-spring rain - *DONE***
+* **Create a more generic SpringBlock function where you can specify the months of
+spring.**
+* **Create a function that, for a specific length of time N, creates an ensemble of
 models where a model exists for every possible block of N years of observed data
 that has been fed only those years of data and then assessed OOS against the other
 blocks of N years. It will be interesting to model on eg. 1965-1975 with a lag of 
