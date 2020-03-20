@@ -9,6 +9,19 @@ Date: 16/03/2020
 ---
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(cache = TRUE)
+
+rm(list=ls()) # Clear workspace
+graphics.off() # This closes all of R's graphics windows.
+cat("\f") # Clear console
+
+library(rstudioapi) # Source rstudioapi to set working directory as needed
+library(rjags) # Source rjags for Bayesian analysis
+library(ggplot2) # Source ggplot2 to plot results
+library(gridExtra) # Source gridExtra for better plots
+library(DT) # Source DT for datatable
+library(dplyr) # Source dplyr for percent_rank
+
+setwd(getwd())
 ```
 
 
@@ -41,19 +54,6 @@ parameters - the parameters in the model that we want to track
 ```{r}
 
 ## Data Initialisation and Model Set Up
-
-rm(list=ls()) # Clear workspace
-graphics.off() # This closes all of R's graphics windows.
-cat("\f") # Clear console
-
-library(rstudioapi) # Source rstudioapi to set working directory as needed
-library(rjags) # Source rjags for Bayesian analysis
-library(ggplot2) # Source ggplot2 to plot results
-library(gridExtra) # Source gridExtra for better plots
-library(DT) # Source DT for datatable
-library(dplyr) # Source dplyr for percent_rank
-
-setwd(getwd())
 
 # First import the data (csv files stolen from De Kauwe - data is provided in 
 # pdf form in Ogle 2015)
@@ -719,7 +719,8 @@ plotWeights = plotWeights[plotWeights$Weights!=0,]
 # Plot
 plot1 <- ggplot(plotWeights,aes(x=Block,y=Weights,fill=Season)) +
   geom_bar(stat="identity", position=position_dodge()) +
-  facet_grid(.~Model,scales = "free_x",switch = "x", space = "free_y")
+  facet_grid(.~Model,scales = "free_x",switch = "x", space = "free_y") +
+  ggtitle("Weights for Spring/Non-spring Rainfall")
 
 last_plot()  
 
@@ -748,7 +749,8 @@ plotWeights$Month = factor(plotWeights$Month, levels = c("Jan","Feb","Mar","Apr"
 # Plot
 plot1 <- ggplot(plotWeights,aes(x=YearIntoPast,y=Weights,fill=Month)) +
    geom_bar(stat="identity", position=position_dodge(), linetype = "solid",size=0.5,color="black") +
-   facet_grid(.~YearIntoPast,scales = "free_x",switch = "x", space = "free_y")
+   facet_grid(.~YearIntoPast,scales = "free_x",switch = "x", space = "free_y") +
+  ggtitle("12-12-6-6-2 Weights")
 
 last_plot()  
 
@@ -757,7 +759,96 @@ Noticeably here, there is less consistent emphasis on "spring" rainfall and
 some very peculiar results. Noticeably the extreme variations in weight seen in
 the autumn of Year 2. It does not seem logical that rainfall received in the August 
 and October of the previous year has a ~4x greater impact on NPP than that received
-in July and September.
+in July and September. It is the on/off nature of these weights that is most
+concerning me. The other years look far more acceptable.
+
+
+
+```{r}
+# Load the data
+load("SAM_posterior_5_32.RData")
+
+# Assemble the dataframe
+plotWeights = data.frame("Weights"=as.vector(t(SAM_posterior_5_32$monthlyWeights$mean)),
+                         "YearIntoPast"=rep(0:4,each=12),
+                         "Month"=rep(c("Dec","Nov","Oct","Sep", "Aug","Jul",
+                                       "Jun", "May","Apr","Mar","Feb","Jan"),5))
+# Assign the factors
+plotWeights$Month = factor(plotWeights$Month, levels = c("Jan","Feb","Mar","Apr",
+                                                         "May","Jun","Jul","Aug",
+                                                         "Sep","Oct","Nov","Dec"))
+# Plot
+plot1 <- ggplot(plotWeights,aes(x=YearIntoPast,y=Weights,fill=Month)) +
+   geom_bar(stat="identity", position=position_dodge(), linetype = "solid",size=0.5,color="black") +
+   facet_grid(.~YearIntoPast,scales = "free_x",switch = "x", space = "free_y") +
+  ggtitle("12-6-6-4-4 Weights")
+
+last_plot()  
+```
+The above plot shows that changing the timeblock can alter the respective 
+weighting in each season. This is a 5year lag with 12-6-6-4-4. Notice how year 1
+now has May-Jun as the key period whereas the above graph has this on a par with
+Jan-Feb and Mar-Apr if we just averaged their weights.
+
+```{r}
+# Load the data
+load("SAM_posterior_3_6_2020-03-19.RData")
+
+# Assemble the dataframe
+plotWeights = data.frame("Weights"=as.vector(t(SAM_posterior_3_6$monthlyWeights$mean)),
+                         "YearIntoPast"=rep(0:2,each=12),
+                         "Month"=rep(c("Dec","Nov","Oct","Sep", "Aug","Jul",
+                                       "Jun", "May","Apr","Mar","Feb","Jan"),3))
+# Assign the factors
+plotWeights$Month = factor(plotWeights$Month, levels = c("Jan","Feb","Mar","Apr",
+                                                         "May","Jun","Jul","Aug",
+                                                         "Sep","Oct","Nov","Dec"))
+# Plot
+plot1 <- ggplot(plotWeights,aes(x=YearIntoPast,y=Weights,fill=Month)) +
+   geom_bar(stat="identity", position=position_dodge(), linetype = "solid",size=0.5,color="black") +
+   facet_grid(.~YearIntoPast,scales = "free_x",switch = "x", space = "free_y") +
+  ggtitle(paste0("3 year lag, spring/non-spring (R2 = ",
+                 signif(SAM_posterior_3_6$R2,2), ", DIC = ",
+                 signif(SAM_posterior_3_6$DIC,4), ", MAE = ",
+                 signif(SAM_posterior_3_6$MAE,4),")"))
+
+last_plot()  
+```
+The above model has the best DIC of all, is ranked in the 74th percentile or higher
+for all performance metrics and is 5th overall when summing the ranks. It has
+6 weights. 
+
+```{r}
+# Load the data
+load("SAM_posterior_4_30.RData")
+
+# Assemble the dataframe
+plotWeights = data.frame("Weights"=as.vector(t(SAM_posterior_4_30$monthlyWeights$mean)),
+                         "YearIntoPast"=rep(0:3,each=12),
+                         "Month"=rep(c("Dec","Nov","Oct","Sep", "Aug","Jul",
+                                       "Jun", "May","Apr","Mar","Feb","Jan"),4))
+# Assign the factors
+plotWeights$Month = factor(plotWeights$Month, levels = c("Jan","Feb","Mar","Apr",
+                                                         "May","Jun","Jul","Aug",
+                                                         "Sep","Oct","Nov","Dec"))
+# Plot
+plot1 <- ggplot(plotWeights,aes(x=YearIntoPast,y=Weights,fill=Month)) +
+   geom_bar(stat="identity", position=position_dodge(), linetype = "solid",size=0.5,color="black") +
+   facet_grid(.~YearIntoPast,scales = "free_x",switch = "x", space = "free_y") +
+  ggtitle(paste0("4 year lag, 12-12-4-2 (R2 = ",signif(SAM_posterior_4_30$R2,2), 
+                 ", DIC = ", signif(SAM_posterior_4_30$DIC,4),
+                 ", MAE = ", signif(SAM_posterior_4_30$MAE,4),")"))
+
+last_plot()  
+```
+The above is the best performing model with no metric lower than the 81st percentile
+and the highest sum of all ranks. It has 5 times as many timeblocks.
+
+*MAJOR RESULT*
+The 3 spring/non-spring models that consider lags of 3 years or more are in the
+top 8 models. They perform well in DIC and Q5/Q95 but suffer in error metrics 
+and R2. 
+
 
 
 **To do:**
