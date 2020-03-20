@@ -849,6 +849,41 @@ The 3 spring/non-spring models that consider lags of 3 years or more are in the
 top 8 models. They perform well in DIC and Q5/Q95 but suffer in error metrics 
 and R2. 
 
+```{r}
+
+# Yearly NPP data
+NPPobserved=ANPPandPrecip[,2] 
+
+NPPobs = data.frame(Year=1:nrow(ANPPandPrecip)+1938,
+                    NPP_obs = NPPobserved)
+NPPmod430 = data.frame(Year=1:nrow(ANPPandPrecip)+1938,
+                    NPP_mod = SAM_posterior_4_30$NPPmod$mean,
+                    NPP_modmin = SAM_posterior_4_30$NPPmod$min,
+                    NPP_modmax = SAM_posterior_4_30$NPPmod$max)
+
+NPPmod36 = data.frame(Year=1:nrow(ANPPandPrecip)+1938,
+                    NPP_mod = SAM_posterior_3_6$NPPmod$mean,
+                    NPP_modmin = SAM_posterior_3_6$NPPmod$min,
+                    NPP_modmax = SAM_posterior_3_6$NPPmod$max)
+
+plot3 <- ggplot(NPPobs) +
+  geom_line(data=NPPobs,aes(Year,NPP_obs),color='black',size=2) +
+  geom_point(data=NPPobs,aes(Year,NPP_obs),color='black',size=2,na.rm=TRUE) +
+  geom_ribbon(data=NPPmod430, aes(x=Year, ymin=NPP_modmin, ymax=NPP_modmax), fill="blue", alpha=0.2) +
+  geom_ribbon(data=NPPmod36, aes(x=Year, ymin=NPP_modmin, ymax=NPP_modmax), fill="red", alpha=0.2) +
+  geom_line(data=NPPmod430,aes(Year,NPP_mod),color = "blue") +
+  geom_line(data=NPPmod36,aes(Year,NPP_mod),color = "red") +
+  theme_bw() +
+  theme(axis.line=element_line(colour = "black"),
+    panel.grid.major=element_blank(),
+    panel.grid.minor=element_blank(),
+    panel.border=element_blank(),
+    panel.background=element_blank()) +
+ ggtitle(paste("3-6 S/NS (red) vs 4-30 (blue) against Observed NPP"))
+  
+
+grid.arrange(plot3)
+```
 
 
 **To do:**
