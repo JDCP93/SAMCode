@@ -695,11 +695,6 @@ for (i in 1:nrow(MODELS)){
     uniWeights[i,k] = mean(weights[j:j+2])
   }
 }
-# We now perform a sort of normalisation so that the total weight is equal to 
-# the number of years. 
-# for (i in 1:10){
-#   uniWeights[i,] = uniWeights[i,]*i/sum(uniWeights[i,])
-# }
 
 # Make the final plotting dataframe
 plotWeights = data.frame("Weights"=as.vector(t(uniWeights)),
@@ -731,8 +726,38 @@ last_plot()
 ```
 
 As can be seen in the graph, for all models, spring rainfall is usually 
-relatively more important than the other seasons.
+relatively more important than the other seasons. 
 
+We plot a similar graph but solely for one model run. The below graph is for
+a 5 year lag with a similar (but not the same) timeblock as Ogle et al.
+This timeblock is of the form 12-12-6-6-2.
+
+```{r}
+# Load the data
+load("SAM_posterior_5_38.RData")
+
+# Assemble the dataframe
+plotWeights = data.frame("Weights"=as.vector(t(SAM_posterior_5_38$monthlyWeights$mean)),
+                         "YearIntoPast"=rep(0:4,each=12),
+                         "Month"=rep(c("Dec","Nov","Oct","Sep", "Aug","Jul",
+                                       "Jun", "May","Apr","Mar","Feb","Jan"),5))
+# Assign the factors
+plotWeights$Month = factor(plotWeights$Month, levels = c("Jan","Feb","Mar","Apr",
+                                                         "May","Jun","Jul","Aug",
+                                                         "Sep","Oct","Nov","Dec"))
+# Plot
+plot1 <- ggplot(plotWeights,aes(x=YearIntoPast,y=Weights,fill=Month)) +
+   geom_bar(stat="identity", position=position_dodge(), linetype = "solid",size=0.5,color="black") +
+   facet_grid(.~YearIntoPast,scales = "free_x",switch = "x", space = "free_y")
+
+last_plot()  
+
+```
+Noticeably here, there is less consistent emphasis on "spring" rainfall and 
+some very peculiar results. Noticeably the extreme variations in weight seen in
+the autumn of Year 2. It does not seem logical that rainfall received in the August 
+and October of the previous year has a ~4x greater impact on NPP than that received
+in July and September.
 
 
 **To do:**
