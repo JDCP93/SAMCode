@@ -114,7 +114,7 @@ SAM <- function(dataset1,dataset2,Nlag,block,prior=FALSE){
                           "cumulativeWeights"=cum.weightStats,
                           "yearlyWeights"=sumD1Stats,
                           "monthlyWeights"=weightOrderedStats)
-      name = paste("SAM_prior_",Nlag,"_",Data$Nblocks,"_",format(Sys.time(),"%Y%m%d%H%M%S"),sep="")  
+      name = paste("SAM_prior_",Nlag,"_",Data$Nblocks,"_",format(Sys.time(),"%Y%m%d_%H%M%S"),sep="")  
       assign(name,output)
       save(list=c(name),file=paste(name,".Rdata",sep=""))
    }else{
@@ -155,7 +155,7 @@ SAM <- function(dataset1,dataset2,Nlag,block,prior=FALSE){
                           "NMSE"=NMSE)
    
       # Write output file
-      name = paste("SAM_posterior_",Nlag,"_",Data$Nblocks,"_",format(Sys.time(),"%Y%m%d%H%M%S"),sep="")
+      name = paste("SAM_posterior_",Nlag,"_",Data$Nblocks,"_",format(Sys.time(),"%Y%m%d_%H%M%S"),sep="")
       assign(name,output)
       save(list=c(name),file=paste(name,".Rdata",sep=""))
    

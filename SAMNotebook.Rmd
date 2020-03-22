@@ -51,7 +51,7 @@ block - the the partitioning of the months into time blocks
 Model run parameters - samples, burn, nadapt, nchain, thin
 parameters - the parameters in the model that we want to track
 
-```{r}
+```{r MODEL SETUP}
 
 ## Data Initialisation and Model Set Up
 
@@ -138,7 +138,7 @@ jags <- jags.model('Model.R', data=Data, n.chains=nchains, n.adapt=nadapt)
 Now we can run the model. Note, we might not need to if the output files already
 exist!!
 
-```{r}
+```{r Initial Model Run, eval=FALSE}
 # Generate the MCMC chain (this is basically running the Bayesian analysis)
 fit <- coda.samples(jags, n.iter=samples, n.burnin=burn, thin=thin,
                     variable.names=parameters)
@@ -165,7 +165,7 @@ from Ogle et al (it should have done because we used their code!)
 We now want to plot figure 2 from Ogle et al for the NPP model to compare our
 results to theirs.
 
-```{r}
+```{r Ogle Fig 2}
 
 # Yearly NPP data
 NPPobserved=ANPPandPrecip[,2] 
@@ -257,7 +257,7 @@ that from the paper, insofar as stochastic methods will allow.**
 
 We now plot the observed NPP against our modelled NPP
 
-```{r}
+```{r Ogle Fit vs Mod}
 # Plot modelled NPP against observed NPP
 
 NPPobs = data.frame(Year=1:nrow(ANPPandPrecip)+1938,
@@ -294,7 +294,7 @@ observed NPP which is why we have gaps in the graph.
 We also replicate figure 4a from Ogle et al. This is the cumulative monthly 
 weights.
 
-```{r}
+```{r Ogle Fig 4a}
 posCum.weightdf = data.frame(monthInPast=1:nrow(posCum.weight),
                     CumulativeWeight = posCum.weight[,1],
                     min = posCum.weightQntls[,1],
@@ -346,7 +346,7 @@ that from the paper, insofar as stochastic methods will allow.**
 A further check is calculating the R^2 value for our model, and compare this to
 the value specified by Ogle et al of 0.75 (Table 1).
 
-```{r}
+```{r Ogle R2}
 # Calculate value of R2
 RSS = sum((posMu[,1]-NPPobserved)^2,na.rm=TRUE)
 TSS = sum((NPPobserved-mean(NPPobserved,na.rm=TRUE))^2,na.rm=TRUE)
@@ -371,7 +371,7 @@ to offset the error bars for clarity...
 
 Therefore, we shall just compare R2 values for now
 
-```{r}
+```{r Initial Model Compare}
 # # Define a function that loads our model output files since all outputs have the
 # same variable name
 loadRData = function(filename){
@@ -460,7 +460,7 @@ about lag times. Namely we will have tested lags of length 1 year up to 10 years
 We will also have tested internal weighting of months.
 
 
-```{r Model run, eval=FALSE, include=TRUE}
+```{r Model run for all time blocks, eval=FALSE, include=TRUE}
 # Source the function
 source("SAMFunction.R")
 
@@ -516,7 +516,7 @@ method.
 
 First we put all the available outputs into a dataframe
 
-```{r}
+```{r Initialise comparison}
 # Find all outputs available
 models = list.files(pattern = "SAM_posterior")
 # Load them
@@ -558,7 +558,7 @@ are to be assigned very high ranks while 0.01 has a very low rank.
 This doesn't capture how the models have performed at all. 0.02 isn't better than 
 0.01 and 0.99 is WAY better than 0.04 - none of this is indicated in the ranks.
 
-```{r}
+```{r Percentile concern}
 # Create fake vector
 x = c(rep(0.01,20),0.02,0.03,0.04,0.99)
 # Calculate percentile rank
@@ -570,7 +570,7 @@ rank
 
 However, I'll stick with this for now. 
 
-```{r}
+```{r Comparison Table 1}
 # Create a dataframe of ranks
 RANK = MODELS
 # We rank each metric, rounding before and after in an attempt to kind of group
@@ -606,7 +606,7 @@ I've created a function called SpringBlock which hopefully creates timeblocks
 in such a manner that we can investigate to what extent antecedent spring rain
 influences NPP
 
-```{r}
+```{r SpringBlock Function}
 SpringBlock <- function(Nlag,Unique.years=TRUE){
   # Function that creates timeblocks where each year is split into spring
   # and non-spring blocks. Spring in Colorado is ~April,May,June
@@ -639,7 +639,7 @@ SpringBlock <- function(Nlag,Unique.years=TRUE){
 ```
 
 I ran this for 1 to 10 years and then evaluated our model for each block:
-```{r, eval=FALSE}
+```{r SpringBlock Model Runs, eval=FALSE}
 source("SAMFunction.R")
 
 for (i in 1:10){
@@ -655,7 +655,7 @@ for (i in 1:10){
 I created the below script which finds all the output files from the model run 
 and then plots them, grouped by length of considered lag and then colours them 
 based on the season of the weight. This took forever. 
-```{r}
+```{r SpringBlock Plots}
 library(ggplot2)
 rm(list=ls())
 # Find all outputs available
@@ -733,7 +733,7 @@ We plot a similar graph but solely for one model run. The below graph is for
 a 5 year lag with a similar (but not the same) timeblock as Ogle et al.
 This timeblock is of the form 12-12-6-6-2.
 
-```{r}
+```{r 5 38 Plot}
 # Load the data
 load("SAM_posterior_5_38.RData")
 
@@ -764,7 +764,7 @@ concerning me. The other years look far more acceptable.
 
 
 
-```{r}
+```{r 5 32 Plot}
 # Load the data
 load("SAM_posterior_5_32.RData")
 
@@ -790,7 +790,7 @@ weighting in each season. This is a 5year lag with 12-6-6-4-4. Notice how year 1
 now has May-Jun as the key period whereas the above graph has this on a par with
 Jan-Feb and Mar-Apr if we just averaged their weights.
 
-```{r}
+```{r 3 6 plot}
 # Load the data
 load("SAM_posterior_3_6_2020-03-19.RData")
 
@@ -814,11 +814,12 @@ plot1 <- ggplot(plotWeights,aes(x=YearIntoPast,y=Weights,fill=Month)) +
 
 last_plot()  
 ```
-The above model has the best DIC of all, is ranked in the 74th percentile or higher
+
+The above model has the best DIC of all, is ranked in the 76th percentile or higher
 for all performance metrics and is 5th overall when summing the ranks. It has
 6 weights. 
 
-```{r}
+```{r 4 30 Plot}
 # Load the data
 load("SAM_posterior_4_30.RData")
 
@@ -841,7 +842,8 @@ plot1 <- ggplot(plotWeights,aes(x=YearIntoPast,y=Weights,fill=Month)) +
 
 last_plot()  
 ```
-The above is the best performing model with no metric lower than the 81st percentile
+
+The above is the best performing model with no metric lower than the 78th percentile
 and the highest sum of all ranks. It has 5 times as many timeblocks.
 
 *MAJOR RESULT*
@@ -849,9 +851,12 @@ The 3 spring/non-spring models that consider lags of 3 years or more are in the
 top 8 models. They perform well in DIC and Q5/Q95 but suffer in error metrics 
 and R2. 
 
-```{r}
+```{r 3 6 4 30 Mod vs Obs}
 
 # Yearly NPP data
+ANPPandPrecip = read.table("data/dataset2.csv", 
+                           header = TRUE, 
+                           stringsAsFactors = FALSE)
 NPPobserved=ANPPandPrecip[,2] 
 
 NPPobs = data.frame(Year=1:nrow(ANPPandPrecip)+1938,
@@ -885,14 +890,154 @@ plot3 <- ggplot(NPPobs) +
 grid.arrange(plot3)
 ```
 
+I want to test whether 3-6 works best when split into spring/non-spring as above
+or whether this is just chance. As such, I will test 3-6 with 6 monthly blocks
+for each of the years, and also with a 1-1-4 split. 
+
+```{r 3year Test Runs, eval=FALSE}
+source("SAMFunction.R")
+  # Create the timeblock for each year being split in 6 monthly blocks
+  timeblock=timeblocks(0,0,0,3,0)
+  Nlag = timeblock$Nlag
+  block = timeblock$block
+  # For the timeblock created, run the model
+  SAM("data/dataset2.csv","data/dataset3.csv",Nlag,block,prior=FALSE)
+
+  
+  # Now run the model for a 1-1-4 timeblock split
+  Nlag = 3
+  block = matrix(c(rep(1,12),rep(2,12),rep(c(3,4,5,6),each=3)), 
+                    nrow=Nlag,ncol=12,byrow = TRUE)
+  # For the timeblock created, run the model
+  SAM("data/dataset2.csv","data/dataset3.csv",Nlag,block,prior=FALSE)
+```
+
+When we plot these results, it is clear that partitioning on spring time appears
+to give better results. 
+
+```{r 3 year comparisons}
+# Load the data
+load("SAM_posterior_3_6_2020-03-19.RData")
+load("SAM_posterior_3_6_20200323_102421.RData")
+load("SAM_posterior_3_6_20200323_103033.RData")
+
+# Assemble the dataframe for spring/non-spring
+plotWeights = data.frame("Weights"=as.vector(t(SAM_posterior_3_6$monthlyWeights$mean)),
+                         "YearIntoPast"=rep(0:2,each=12),
+                         "Month"=rep(c("Dec","Nov","Oct","Sep", "Aug","Jul",
+                                       "Jun", "May","Apr","Mar","Feb","Jan"),3))
+# Assign the factors
+plotWeights$Month = factor(plotWeights$Month, levels = c("Jan","Feb","Mar","Apr",
+                                                         "May","Jun","Jul","Aug",
+                                                         "Sep","Oct","Nov","Dec"))
+# Create plot ready for grid.assign
+plot1 <- ggplot(plotWeights,aes(x=YearIntoPast,y=Weights,fill=Month)) +
+      geom_bar(stat="identity", position=position_dodge(), linetype = "solid",size=0.5,color="black") +
+      facet_grid(.~YearIntoPast,scales = "free_x",switch = "x", space = "free_y") +
+      ggtitle(paste0("3 year lag, spring/non-spring (R2 = ",
+                     signif(SAM_posterior_3_6$R2,2), ", DIC = ",
+                     signif(SAM_posterior_3_6$DIC,4), ", MAE = ",
+                     signif(SAM_posterior_3_6$MAE,4),")"))
+
+
+
+# Assemble the dataframe for the 2-2-2 6monthly blocks
+plotWeights2 = data.frame("Weights"=as.vector(t(SAM_posterior_3_6_20200323_102421$monthlyWeights$mean)),
+                         "YearIntoPast"=rep(0:2,each=12),
+                         "Month"=rep(c("Dec","Nov","Oct","Sep", "Aug","Jul",
+                                       "Jun", "May","Apr","Mar","Feb","Jan"),3))
+# Assign the factors
+plotWeights2$Month = factor(plotWeights2$Month, levels = c("Jan","Feb","Mar","Apr",
+                                                         "May","Jun","Jul","Aug",
+                                                         "Sep","Oct","Nov","Dec"))
+# Create the plot for grid.arrange
+plot2 <- ggplot(plotWeights2,aes(x=YearIntoPast,y=Weights,fill=Month)) +
+      geom_bar(stat="identity", position=position_dodge(), linetype = "solid",size=0.5,color="black") +
+      facet_grid(.~YearIntoPast,scales = "free_x",switch = "x", space = "free_y") +
+      ggtitle(paste0("3 year lag, 6 month blocks  (R2 = ",
+                     signif(SAM_posterior_3_6_20200323_102421$R2,2), ", DIC = ",
+                     signif(SAM_posterior_3_6_20200323_102421$DIC,4), ", MAE = ",
+                     signif(SAM_posterior_3_6_20200323_102421$MAE,4),")"))
+
+
+# Assemble the dataframe for the 1-1-4 model
+plotWeights3 = data.frame("Weights"=as.vector(t(SAM_posterior_3_6_20200323_103033$monthlyWeights$mean)),
+                         "YearIntoPast"=rep(0:2,each=12),
+                         "Month"=rep(c("Dec","Nov","Oct","Sep", "Aug","Jul",
+                                       "Jun", "May","Apr","Mar","Feb","Jan"),3))
+# Assign the factors
+plotWeights3$Month = factor(plotWeights3$Month, levels = c("Jan","Feb","Mar","Apr",
+                                                         "May","Jun","Jul","Aug",
+                                                         "Sep","Oct","Nov","Dec"))
+# Plot
+plot3 <- ggplot(plotWeights3,aes(x=YearIntoPast,y=Weights,fill=Month)) +
+      geom_bar(stat="identity", position=position_dodge(), linetype = "solid",size=0.5,color="black") +
+      facet_grid(.~YearIntoPast,scales = "free_x",switch = "x", space = "free_y") +
+      ggtitle(paste0("3 year lag, 1-1-4 block (R2 = ",
+                     signif(SAM_posterior_3_6_20200323_103033$R2,2), ", DIC = ",
+                     signif(SAM_posterior_3_6_20200323_103033$DIC,4), ", MAE = ",
+                     signif(SAM_posterior_3_6_20200323_103033$MAE,4),")"))
+
+grid.arrange(plot1, plot2, plot3, nrow = 3)
+
+```
+
+```{r Table2}
+rm(list=ls())
+# Find all outputs available
+models = list.files(pattern = "SAM_posterior")
+# Load them
+for (i in 1:length(models)){
+  load(models[i])
+}
+# Find all the model outputs we've loaded
+models = objects(pattern = "SAM_posterior")
+
+# Put these into a dataframe as it will be easier to work with
+MODELS = data.frame(row.names=models)
+
+for (i in 1:length(models)){
+MODELS[i,1:11]=data.frame(t(sapply(get(models[i]),c)))
+}
+for (j in 6:11){
+  MODELS[,j]=sapply(MODELS[,j],c)
+}
+
+# Create a dataframe of ranks
+RANK = MODELS
+# We rank each metric, rounding before and after in an attempt to kind of group
+# similarly performing models together 
+RANK$DICrank = round(percent_rank(-1*signif(MODELS$DIC,3)),2)
+RANK$R2rank = round(percent_rank(signif(MODELS$R2,3)),2)
+RANK$MAErank = round(percent_rank(-1*signif(MODELS$MAE,3)),2)
+RANK$NMSErank = round(percent_rank(-1*signif(MODELS$NMSE,3)),2)
+RANK$Q5rank = round(percent_rank(-1*signif(MODELS$Q5,3)),2)
+RANK$Q95rank = round(percent_rank(-1*signif(MODELS$Q95,3)),2)
+# Remove the old rows
+RANK = RANK[-(1:11)]
+# Sum the ranks in a new column
+RANK$sum = rowSums(RANK)
+# Sort the dataframe by sum descending.
+RANK = RANK[order(-RANK$sum),]
+# Found datatable from https://rstudio.github.io/DT/010-style.html
+# Here, we color each column with higher ranks being more green
+brk <- quantile(RANK, probs = seq(.05, .95, .05), na.rm = TRUE)
+clr <- {paste0("rgb(", round(seq(255, 40, length.out = length(brk) + 1), 0), ",255,", round(seq(255, 40, length.out = length(brk) + 1), 0), ")")}
+x = datatable(RANK)
+formatStyle(x,1:6, backgroundColor = styleInterval(brk, clr))
+```
+
+
+
 
 **To do:**
 * **Produce a function that compares model outputs by quantile ranking the 
 model performance metrics**
-* **Create a function that produces a "block" that groups weight as "spring" rain 
-and non-spring rain - *DONE***
+
+
 * **Create a more generic SpringBlock function where you can specify the months of
 spring.**
+
 * **Create a function that, for a specific length of time N, creates an ensemble of
 models where a model exists for every possible block of N years of observed data
 that has been fed only those years of data and then assessed OOS against the other
