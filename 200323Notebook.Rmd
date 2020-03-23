@@ -1,0 +1,30 @@
+---
+title: "2020-03-23 Week 3 Notebook"
+author: "Jon Page"
+Last Updated: date()
+output:
+  html_document:
+    df_print: paged
+Date: 23/03/2020
+---
+***
+# Introduction
+
+This notebook is to track my work in the week commencing 23/03/20.
+
+Following Zoom with Martin and Gab, the below are my targets for this week:
+
+1. Take FLUXNET data from one site and test it OOS
+ + Model NEE as function of precip, VPD and Temp
+ + Run the SAM approach over a few years and then see how the model works for
+ the following years
+ + I could investigate whether the 3-6 model works for it at all.
+2. Sort out working from home
+3. Read and produce a "BIG" question along with some hypotheses to test within
+this question's framework
+
+# 
+```{r}
+plot(cars)
+```
+

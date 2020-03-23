@@ -326,6 +326,7 @@ plot4 <- ggplot(posCum.weightdf) +
 
 grid.arrange(plot4)
 ```
+
 We can see how similar our plot is to that of Ogle et al's. 
 
 Of note is that the weight where c = 0.9 is 3 months higher than Ogle's 
@@ -755,6 +756,7 @@ plot1 <- ggplot(plotWeights,aes(x=YearIntoPast,y=Weights,fill=Month)) +
 last_plot()  
 
 ```
+
 Noticeably here, there is less consistent emphasis on "spring" rainfall and 
 some very peculiar results. Noticeably the extreme variations in weight seen in
 the autumn of Year 2. It does not seem logical that rainfall received in the August 
@@ -785,6 +787,7 @@ plot1 <- ggplot(plotWeights,aes(x=YearIntoPast,y=Weights,fill=Month)) +
 
 last_plot()  
 ```
+
 The above plot shows that changing the timeblock can alter the respective 
 weighting in each season. This is a 5year lag with 12-6-6-4-4. Notice how year 1
 now has May-Jun as the key period whereas the above graph has this on a par with
@@ -1045,4 +1048,7 @@ blocks of N years. It will be interesting to model on eg. 1965-1975 with a lag o
 5 years and then see how model performance compares for 1950-1960 and 1980-1990**
 
 
+
+
+/srv/ccrc/data04/z3509830/Fluxnet_data/All_flux_sites_processed_PLUMBER2/Post-processed_PLUMBER2_outputs
 
