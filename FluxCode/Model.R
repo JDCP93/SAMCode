@@ -12,22 +12,11 @@ model{
   # data model for the Event data for the purpose of estimating the
   # missing data:
   
-  # Very uninformed priors for parameters in the Event missing data model
-  for (k in 1:4) {
-    mu.ev[k] ~ dunif(0, 500)
-    sigma.ev[k] ~ dunif(0, 500)
-    tau.ev[k] <- pow(sigma.ev[k], -2)
-  }
-  #The missing Events are normally distributed by the above prior
-  for (i in 1:N) {
-    for (k in 1:4) {
-      Event[i, k] ~ dnorm(mu.ev[k], tau.ev[k])
-    }
-  }
-  
+
+
   # Assign priors to the ANPP regression parameters
   # These are very precisely zero i.e. mean of zero and very low variance
-  for (k in 1:6) {
+  for (k in 1:2) {
     a[k] ~ dnorm(0, 0.0000001)
   }
   
@@ -43,7 +32,7 @@ model{
     for (m in 1:12) {
       # weight for precipitation received after the NPP harvest for
       # the current year is 0 (Oct,Nov,Dec)
-      delta[m, t] <- (deltaX[block[t, m]]) * (1 - equals(t, 1) * step(m - 9.5))
+      delta[m, t] <- deltaX[block[t, m]]
       # normalise the monthly weights (sumD is defined below)
       weight[m, t] <- delta[m, t] / sumD
       # Reorder the weights in order of "recentness" so that
@@ -101,8 +90,7 @@ model{
   for (i in 1:N) {
     # Calculate mu, the mean of the distribution of NPP
     # (convert antecedent precipitation (antX) from inches to mm.)
-    mu[i] <- a[1] + a[2] * antX[YearID[i]] * 25.4 + a[3] * Event[i, 1] +
-             a[4] * Event[i, 2] + a[5] * Event[i, 3] + a[6] * Event[i, 4]
+    mu[i] <- a[1] + a[2] * antX[YearID[i]] 
     # Likelihood for observed NPP - it is a normal distribution with
     # mean mu and sd tau
     NPP[i] ~ dnorm(mu[i], tau)

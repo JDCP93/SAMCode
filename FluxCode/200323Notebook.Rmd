@@ -111,3 +111,7 @@ relevant.
 
 * Is it possible to consider lags in NEE explaining NEE - consider correlation of
 the productivity measure and whether this has influence on itself.
+
+* The model code contains the weight for each month, normalised to that years
+contribution (it is the alphas at the end of the code) - this might be useful
+to show that spring is clearly the most important.
