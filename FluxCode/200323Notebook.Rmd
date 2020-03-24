@@ -1,0 +1,113 @@
+---
+title: "2020-03-23 Week 3 Notebook"
+author: "Jon Page"
+Last Updated: date()
+output:
+  html_document:
+    df_print: paged
+Date: 23/03/2020
+---
+***
+# Introduction
+
+This notebook is to track my work in the week commencing 23/03/20.
+
+Following Zoom with Martin and Gab, the below are my targets for this week:
+
+1. Take FLUXNET data from one site and test it OOS
+ + Model NEE as function of precip, VPD and Temp
+ + Run the SAM approach over a few years and then see how the model works for
+ the following years
+ + I could investigate whether the 3-6 model works for it at all.
+2. Sort out working from home
+3. Read and produce a "BIG" question along with some hypotheses to test within
+this question's framework
+
+***
+
+# BIG QUESTION:
+
+### To what extent does the productivity of grasslands depend on antecedent climate and how is this influenced by eCO~2~?
+
+1. **Which antecedent effects are most important?**
+
+Precipitation will be seen to have the longest historical period due to the 
+extended time periods over which soil moisture varies. However, it will be seen
+that temperature and vapour pressure deficit will also have an impact on a more
+recent timescale.
+
+2. **What timescales do lags operate over?**
+
+The timescale of lags is very dependent on the climate variable being examined.
+However, overall, it will be important to consider the previous ~5 years when
+attempting to explain grassland productivity. Since plants exposed to eCO~2~ 
+have a greater capacity for production, I expect the influence of antecedent 
+effects to become greater as plants are more able to take advantage of any increase
+in resources.
+
+3. **How does the role of antecedent effects change based on the prevailing climate 
+at a site?**
+
+The importance of lagged climatic variables will vary based on the ecosystem
+but across grasslands, antecedent precipitation will consistently be the most 
+influential historical influence. This is due to the majority of grasslands being
+water-limited. This will not change significantly under eCO~2~ as water savings 
+in grassland are offset by the greater climatic variability.
+
+4. **How do extreme events interact with the role of lags in grasslands ecosystems?**
+
+Extreme events will produce longer-lasting impacts that propogate through the 
+productivity response over wider timespans than the average years. This however
+will be mitigated under climate change as enhanced WUE and higher productivity
+provide a cushioning effect.
+
+***
+# netCDF Files
+
+First up is accessing the netCDF files saved at the below link and finding which
+ones are from grassland sites
+
+/srv/ccrc/data04/z3509830/Fluxnet_data/All_flux_sites_processed_PLUMBER2/Post-processed_PLUMBER2_outputs
+
+https://fluxnet.fluxdata.org/sites/site-list-and-pages/ has a list of the sites
+by IGBP classification for the FLUXNET 2015 files. 
+
+https://fluxnet.fluxdata.org/data/la-thuile-dataset/ This page has the list for
+the La Thuile sites. No La Thuile datasets for grassland sites are over 10 years 
+of length (or more than about 5).
+
+Similarly, http://www.ozflux.org.au/monitoringsites/ shows that the 2 sites from
+OzFlux that had longer time series of data were not grasslands. 
+
+US-Var from FLUXNET 2015 is a grassland site with the longest data record 
+available of 14 years. We shall use this.
+
+The below commands were used to copy the Met and Flux files from the storm 
+servers to my PC:
+
+```{bash, eval=FALSE}
+scp z5293113@maelstrom.ccrc.unsw.edu.au:/srv/ccrc/data04/z3509830/Fluxnet_data/All_flux_sites_processed_PLUMBER2/Post-processed_PLUMBER2_outputs/Nc_files/Flux/US-Wkg_2005-2014_FLUXNET2015_Flux.nc .
+
+scp z5293113@maelstrom.ccrc.unsw.edu.au:/srv/ccrc/data04/z3509830/Fluxnet_data/All_flux_sites_processed_PLUMBER2/Post-processed_PLUMBER2_outputs/Nc_files/Met/US-Wkg_2005-2014_FLUXNET2015_Met.nc .
+```
+
+Important differences from the code replicating Ogle et al:
+
+1. I will NOT consider the precipitation events of the current year - Ogle et al
+showed that these were insignificant for their site and they are also considered
+under the monthly weights
+2. I will NOT set the weights of Oct/Nov/Dec of the current year to zero - since
+we are using flux-derived NEE rather than harvested biomass, this is no longer
+relevant.
+3. I WILL consider weights for monthly mean temp and VPD. 
+
+
+
+
+
+
+***
+# Thoughts
+
+* Is it possible to consider lags in NEE explaining NEE - consider correlation of
+the productivity measure and whether this has influence on itself.
