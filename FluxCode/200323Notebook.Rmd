@@ -7,6 +7,20 @@ output:
     df_print: paged
 Date: 23/03/2020
 ---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(cache = TRUE)
+rm(list=ls()) # Clear workspace
+graphics.off() # This closes all of R's graphics windows.
+cat("\f") # Clear console
+library(rstudioapi) # Source rstudioapi to set working directory as needed
+library(rjags) # Source rjags for Bayesian analysis
+library(ggplot2) # Source ggplot2 to plot results
+library(gridExtra) # Source gridExtra for better plots
+library(DT) # Source DT for datatable
+library(dplyr) # Source dplyr for percent_rank
+setwd(getwd())
+```
 ***
 # Introduction
 
@@ -80,16 +94,74 @@ Similarly, http://www.ozflux.org.au/monitoringsites/ shows that the 2 sites from
 OzFlux that had longer time series of data were not grasslands. 
 
 US-Var from FLUXNET 2015 is a grassland site with the longest data record 
-available of 14 years. We shall use this.
+available of 14 years. 
+
+US-Wkg has 10 years of data and was used instead (for some inexplicable reason)
 
 The below commands were used to copy the Met and Flux files from the storm 
 servers to my PC:
 
-```{bash, eval=FALSE}
+```{bash Storm Server Files, eval=FALSE}
 scp z5293113@maelstrom.ccrc.unsw.edu.au:/srv/ccrc/data04/z3509830/Fluxnet_data/All_flux_sites_processed_PLUMBER2/Post-processed_PLUMBER2_outputs/Nc_files/Flux/US-Wkg_2005-2014_FLUXNET2015_Flux.nc .
 
 scp z5293113@maelstrom.ccrc.unsw.edu.au:/srv/ccrc/data04/z3509830/Fluxnet_data/All_flux_sites_processed_PLUMBER2/Post-processed_PLUMBER2_outputs/Nc_files/Met/US-Wkg_2005-2014_FLUXNET2015_Met.nc .
 ```
+
+We now have to extract the data and turn it into the format we want:
+
+```{r Netcdf Manipulation}
+
+name = "US-Wkg_2005-2014_FLUXNET2015_"
+
+Met = nc_open(paste0(name,"Met.nc"))
+Flux = nc_open(paste0(name,"Flux.nc"))
+
+time = ncvar_get(Met,"time")
+Tair = ncvar_get(Met,"Tair")
+Precip = ncvar_get(Met,"Precip")
+VPD = ncvar_get(Met,"VPD")
+NEE = ncvar_get(Flux,"NEE")
+
+ncatt_get(Met, "time")
+time_from = substr(ncatt_get(Met, "time")$units, 15, 33)
+time <- as.POSIXct(time, origin=time_from)
+
+nc_close(Met)
+nc_close(Flux)
+
+# Define unit conversions
+SEC_TO_30MIN = 1800
+KEL_TO_CEL = -273.15
+
+# Create data frame with the units converted
+# Precip is now in mm
+# Tair is now in Celsius
+df <- data.frame(time, NEE, Tair+KEL_TO_CEL,Precip*SEC_TO_30MIN,VPD)
+colnames(df)<- c("time","NEE","Tair","Precip","VPD")
+
+
+df_day <- df %>%
+      mutate(day=as.Date(time, format="%Y-%m-%d")) %>%
+      group_by(day) %>%               # group by the day column
+      summarise(NEE=sum(NEE),Tair=mean(Tair),Precip=sum(Precip),VPD=mean(VPD))
+
+df_month <- df_day %>%
+      mutate(month=format(as.Date(df_day$day),"%Y-%m")) %>%
+      group_by(month) %>%               # group by the day column
+      summarise(NEE=sum(NEE),Tair=mean(Tair),Precip=sum(Precip),VPD=mean(VPD))
+
+# Create our Precip input matrix
+Precip = data.frame(matrix(df_month$Precip,ncol = 12, byrow = TRUE))
+colnames(Precip) <- c("ppt1","ppt2","ppt3","ppt4","ppt5","ppt6","ppt7","ppt8","ppt9","ppt10","ppt11","ppt12")
+
+# Create the NEE input matrix
+
+df_day$Year = format(df_day$day,"%Y")
+NEE = aggregate(df_day['NEE'],by=df_day['Year'],sum)
+```
+
+
+
 
 Important differences from the code replicating Ogle et al:
 
@@ -100,11 +172,77 @@ under the monthly weights
 we are using flux-derived NEE rather than harvested biomass, this is no longer
 relevant.
 3. I WILL consider weights for monthly mean temp and VPD. 
+4. Assuming that all sites have the same length of Precip data and NEE data, I
+have had to amend the code which previously assumed that we always had Nlag prior
+years of Precip for the first year of NPP data
+
+
+```{r Model run for all time blocks, include=TRUE}
+source("SAMFunction.R")
+timeblock = SpringBlock(3)
+Nlag = timeblock$Nlag
+block = timeblock$block
+NEE = NEE[-(1:Nlag),]
+# For the timeblock created, run the model
+SAM(Precip,NEE,Nlag,block,prior=FALSE)
+
+```
 
 
 
 
+```{r}
+load("SAM_posterior_3_6_20200325_152051.Rdata")
+library(ggplot2)
+library(gridExtra) # Source gridExtra for better plots
+NPPobs = data.frame(Year=1:nrow(NEE)+2006,
+                    NPP_obs = NEE[,2])
+NPPmod = data.frame(Year=1:length(SAM_posterior_3_6_20200325_152051$NPPmod$mean)+2006,
+                    NPP_mod = SAM_posterior_3_6_20200325_152051$NPPmod$mean,
+                    NPP_modmin = SAM_posterior_3_6_20200325_152051$NPPmod$min,
+                    NPP_modmax = SAM_posterior_3_6_20200325_152051$NPPmod$max)
+plot3 <- ggplot(NPPobs) +
+  geom_line(data=NPPobs,aes(Year,NPP_obs),color='steelblue',size=2) +
+  geom_point(data=NPPobs,aes(Year,NPP_obs),color='steelblue',size=2,na.rm=TRUE) +
+  geom_ribbon(data=NPPmod, aes(x=Year, ymin=NPP_modmin, ymax=NPP_modmax), fill="grey70", alpha=0.4) +
+  geom_line(data=NPPmod,aes(Year,NPP_mod)) +
+  theme_bw() +
+  theme(axis.line=element_line(colour = "black"),
+    panel.grid.major=element_blank(),
+    panel.grid.minor=element_blank(),
+    panel.border=element_blank(),
+    panel.background=element_blank()) 
+grid.arrange(plot3)
+```
 
+```{r}
+# Assemble the dataframe for spring/non-spring
+plotWeights = data.frame("Weights"=as.vector(t(SAM_posterior_3_6_20200325_152051$monthlyWeights$mean)),
+                         "YearIntoPast"=rep(0:2,each=12),
+                         "Month"=rep(c("Dec","Nov","Oct","Sep", "Aug","Jul",
+                                       "Jun", "May","Apr","Mar","Feb","Jan"),3))
+# Assign the factors
+plotWeights$Month = factor(plotWeights$Month, levels = c("Jan","Feb","Mar","Apr",
+                                                         "May","Jun","Jul","Aug",
+                                                         "Sep","Oct","Nov","Dec"))
+# Create plot ready for grid.assign
+plot1 <- ggplot(plotWeights,aes(x=YearIntoPast,y=Weights,fill=Month)) +
+      geom_bar(stat="identity", position=position_dodge(), linetype = "solid",size=0.5,color="black") +
+      facet_grid(.~YearIntoPast,scales = "free_x",switch = "x", space = "free_y") +
+      ggtitle(paste0("3 year lag, spring/non-spring (R2 = ",
+                     signif(SAM_posterior_3_6_20200325_152051$R2,2), ", DIC = ",
+                     signif(SAM_posterior_3_6_20200325_152051$DIC,4), ", MAE = ",
+                     signif(SAM_posterior_3_6_20200325_152051$MAE,4),")"))
+grid.arrange(plot1)
+```
+
+
+
+We have 10 years of Precip and NEE data from FLUXNET - however, because we are
+looking at a lag of 3 years, we effectively only have 7 years of NEE data.
+This is an exceptionally short data set. 
+
+I may look at the longest data set available, no matter what the ecosystem is.
 
 ***
 # Thoughts

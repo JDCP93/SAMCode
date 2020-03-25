@@ -8,11 +8,6 @@
 # rainfall events based on intensity
 
 model{
-  # Some of the precipitation event data are missing, so specify a simple
-  # data model for the Event data for the purpose of estimating the
-  # missing data:
-  
-
 
   # Assign priors to the ANPP regression parameters
   # These are very precisely zero i.e. mean of zero and very low variance
@@ -32,7 +27,7 @@ model{
     for (m in 1:12) {
       # weight for precipitation received after the NPP harvest for
       # the current year is 0 (Oct,Nov,Dec)
-      delta[m, t] <- deltaX[block[t, m]]
+      delta[m, t] <- (deltaX[block[t, m]])
       # normalise the monthly weights (sumD is defined below)
       weight[m, t] <- delta[m, t] / sumD
       # Reorder the weights in order of "recentness" so that
@@ -83,10 +78,6 @@ model{
   tau <- 1 / (sigma ^ 2)
   
   # Define model for latent (mean) NPP;
-  # Event[,k] represents the amount of precipitation in the current growing
-  # year received in different size classes, where k indexes the event size
-  # class
-  # (k=1 for < 5 mm; k=2 for 5-15 mm; k=3 for 15-30 mm; k=4 for >30 mm);
   for (i in 1:N) {
     # Calculate mu, the mean of the distribution of NPP
     # (convert antecedent precipitation (antX) from inches to mm.)
